@@ -1,0 +1,60 @@
+<!-- View 3.2: Form Sao Lưu - Phục Hồi Dữ Liệu (frmBackup_Restore) -->
+<!-- Tham chiếu: De.md Mục II.3.2 (Chỉ Admin) -->
+
+<div class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+  <div class="border-b border-gray-100 pb-4">
+    <h2 class="text-xl font-bold text-gray-800 flex items-center space-x-2">
+      <i class="fa-solid fa-database text-indigo-600"></i>
+      <span>3.2 Sao Lưu & Phục Hồi Dữ Liệu (frmBackup_Restore)</span>
+    </h2>
+    <p class="text-xs text-gray-500 mt-1">Sao lưu và phục hồi CSDL QLVT theo các mốc thời điểm</p>
+  </div>
+
+  <!-- Nút lệnh chức năng -->
+  <div class="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg">
+    <button onclick="triggerBackup()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <span>Sao lưu (Backup)</span>
+    </button>
+    <button onclick="triggerRestore()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Phục hồi (Restore)</span>
+    </button>
+    <a href="/employees" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+      Thoát
+    </a>
+
+    <!-- Tùy chọn Reset file sao lưu -->
+    <div class="ml-auto flex items-center space-x-2">
+      <input type="checkbox" id="resetBackupFile" class="rounded text-indigo-600 focus:ring-indigo-500">
+      <label for="resetBackupFile" class="text-xs text-gray-600 font-medium">Reset file sao lưu (INIT / NOINIT)</label>
+    </div>
+  </div>
+
+  <!-- Bảng danh sách các bản backup -->
+  <div>
+    <h3 class="text-sm font-bold text-gray-700 mb-3">Danh sách các bản sao lưu đã tạo</h3>
+    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+          <tr>
+            <th class="px-4 py-3 border-b text-center w-24">Chọn</th>
+            <th class="px-4 py-3 border-b">Bản backup số</th>
+            <th class="px-4 py-3 border-b">Ngày giờ backup</th>
+            <th class="px-4 py-3 border-b">Tên thiết bị / Đường dẫn</th>
+          </tr>
+        </thead>
+        <tbody id="backupListBody" class="divide-y divide-gray-100">
+          <tr>
+            <td class="px-4 py-3 text-center">
+              <input type="radio" name="selectedBackup" value="1" checked class="text-indigo-600 focus:ring-indigo-500">
+            </td>
+            <td class="px-4 py-3 font-semibold">Bản 1</td>
+            <td class="px-4 py-3 text-gray-600 font-mono">01/10/2024 14:30:00</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">C:\Backup\QLVT.bak</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

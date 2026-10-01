@@ -1,0 +1,50 @@
+<!-- View 1.5: Phiếu Xuất Hàng (Master-Detail) -->
+<!-- Tham chiếu: De.md Mục II.1.5 (Ràng buộc: SL xuất <= SL tồn kho) -->
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="font-bold text-gray-800 text-lg">1.5 Phiếu Xuất Kho (PhieuXuat & CTPX)</h2>
+      <p class="text-xs text-gray-500">Quản lý phiếu xuất bán | Kiểm tra tồn kho trước khi xuất</p>
+    </div>
+    <button onclick="openCreateIssueModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+      <i class="fa-solid fa-plus"></i>
+      <span>Lập Phiếu Xuất Mới</span>
+    </button>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 border-b">Mã PX</th>
+            <th class="px-4 py-3 border-b">Ngày xuất</th>
+            <th class="px-4 py-3 border-b">Họ tên khách hàng</th>
+            <th class="px-4 py-3 border-b">Nhân viên xuất</th>
+            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% if (typeof issues !== 'undefined' && issues && issues.length > 0) { %>
+            <% issues.forEach(px => { %>
+              <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="viewIssueDetails('<%= px.MAPX %>')">
+                <td class="px-4 py-3 font-semibold font-mono text-amber-600"><%= px.MAPX %></td>
+                <td class="px-4 py-3"><%= px.NGAY ? new Date(px.NGAY).toLocaleDateString('vi-VN') : '-' %></td>
+                <td class="px-4 py-3 font-medium text-gray-800"><%= px.HOTENKH %></td>
+                <td class="px-4 py-3 text-gray-600"><%= px.HoTenNV || ('Mã NV: ' + px.MANV) %></td>
+                <td class="px-4 py-3 text-center space-x-2">
+                  <button onclick="event.stopPropagation(); viewIssueDetails('<%= px.MAPX %>')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                    <i class="fa-solid fa-eye"></i> Xem chi tiết
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Chưa có phiếu xuất kho nào.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

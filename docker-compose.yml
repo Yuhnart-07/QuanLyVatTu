@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu Microsoft SQL Server 2022
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: qlvt_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - qlvt_network
+
+  # 2. Ứng dụng Backend Node.js
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: qlvt_web
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DB_USER=sa
+      - DB_PASSWORD=YourStrongPassword123!
+      - DB_SERVER=sqlserver
+      - DB_PORT=1433
+      - DB_NAME=QLVT
+      - SESSION_SECRET=qlvt-production-secret-key
+    ports:
+      - "3000:3000"
+    depends_on:
+      - sqlserver
+    networks:
+      - qlvt_network
+
+volumes:
+  mssql_data:
+
+networks:
+  qlvt_network:
+    driver: bridge

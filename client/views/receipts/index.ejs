@@ -1,0 +1,52 @@
+<!-- View 1.4: Phiếu Nhập Hàng (Master-Detail) -->
+<!-- Tham chiếu: De.md Mục II.1.4 (Ràng buộc: SL nhập <= SL còn lại của DDH) -->
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="font-bold text-gray-800 text-lg">1.4 Phiếu Nhập Kho (PhieuNhap & CTPN)</h2>
+      <p class="text-xs text-gray-500">Nhập hàng dựa vào Đơn đặt hàng | Kiểm tra SL nhập $\le$ SL đặt</p>
+    </div>
+    <button onclick="openCreateReceiptModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+      <i class="fa-solid fa-plus"></i>
+      <span>Lập Phiếu Nhập Mới</span>
+    </button>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 border-b">Mã PN</th>
+            <th class="px-4 py-3 border-b">Ngày nhập</th>
+            <th class="px-4 py-3 border-b">Mã số DDH</th>
+            <th class="px-4 py-3 border-b">Nhà cung cấp</th>
+            <th class="px-4 py-3 border-b">Nhân viên nhận</th>
+            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% if (typeof receipts !== 'undefined' && receipts && receipts.length > 0) { %>
+            <% receipts.forEach(pn => { %>
+              <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="viewReceiptDetails('<%= pn.MAPN %>')">
+                <td class="px-4 py-3 font-semibold font-mono text-emerald-600"><%= pn.MAPN %></td>
+                <td class="px-4 py-3"><%= pn.NGAY ? new Date(pn.NGAY).toLocaleDateString('vi-VN') : '-' %></td>
+                <td class="px-4 py-3 font-mono text-indigo-600"><%= pn.MasoDDH %></td>
+                <td class="px-4 py-3 text-gray-700"><%= pn.NhaCC || '-' %></td>
+                <td class="px-4 py-3 text-gray-600"><%= pn.HoTenNV || ('Mã NV: ' + pn.MANV) %></td>
+                <td class="px-4 py-3 text-center space-x-2">
+                  <button onclick="event.stopPropagation(); viewReceiptDetails('<%= pn.MAPN %>')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                    <i class="fa-solid fa-eye"></i> Xem chi tiết
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Chưa có phiếu nhập kho nào.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

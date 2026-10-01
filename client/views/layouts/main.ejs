@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'QLVT ERP - Quản Lý Nhập Xuất Vật Tư' %></title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            sapo: {
+              DEFAULT: '#0088ff',
+              hover: '#0070e0',
+              active: '#005cbd',
+              light: '#ebf5ff',
+              navy: '#111827',
+              navyside: '#162235',
+              bg: '#f4f6f8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome 6 Pro / Free Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Sapo Design System Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="h-full bg-[#f4f6f8] text-slate-800 font-sans antialiased overflow-hidden">
+
+  <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+    <!-- ================= CHẾ ĐỘ DASHBOARD QUẢN LÝ (ĐÃ ĐĂNG NHẬP) ================= -->
+    <div class="flex h-screen w-screen overflow-hidden">
+      
+      <!-- 1. SIDEBAR CỐ ĐỊNH BÊN TRÁI (DARK NAVY #111827) -->
+      <%- include('../components/sidebar') %>
+
+      <!-- 2. KHUNG CHÍNH (TOPBAR + NỘI DUNG CUỘN) -->
+      <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        
+        <!-- Thanh điều hướng trên cùng (Clean White) -->
+        <%- include('../components/navbar') %>
+
+        <!-- Vùng nội dung chính (Nền Slate #F4F6F8, cuộn độc lập) -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#f4f6f8]">
+          <div class="max-w-[1400px] mx-auto">
+            <%- body %>
+          </div>
+        </main>
+      </div>
+
+    </div>
+  <% } else { %>
+    <!-- ================= CHẾ ĐỘ TOÀN TRANG (CHO LOGIN) ================= -->
+    <div class="min-h-screen w-full bg-[#f4f6f8] flex items-center justify-center p-4">
+      <%- body %>
+    </div>
+  <% } %>
+
+  <!-- Modal & Confirm Dialog & Toast Container dùng chung -->
+  <%- include('../components/modal') %>
+
+  <!-- Client-side UI Engine JavaScript -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

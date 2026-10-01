@@ -1,0 +1,51 @@
+<!-- View 1.3: Đơn Đặt Hàng (SubForm Master-Detail) -->
+<!-- Tham chiếu: De.md Mục II.1.3 & Rule 01 (JSON OPENJSON), Rule 03 (req.user.manv) -->
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="font-bold text-gray-800 text-lg">1.3 Đơn Đặt Hàng (SubForm Master-Detail)</h2>
+      <p class="text-xs text-gray-500">Quản lý đơn hàng đặt từ các nhà cung cấp</p>
+    </div>
+    <button onclick="openCreateOrderModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+      <i class="fa-solid fa-plus"></i>
+      <span>Lập Đơn Đặt Hàng Mới</span>
+    </button>
+  </div>
+
+  <!-- Danh sách Master đơn hàng -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 border-b">Mã số DDH</th>
+            <th class="px-4 py-3 border-b">Ngày lập</th>
+            <th class="px-4 py-3 border-b">Nhà cung cấp</th>
+            <th class="px-4 py-3 border-b">Nhân viên lập</th>
+            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% if (typeof orders !== 'undefined' && orders && orders.length > 0) { %>
+            <% orders.forEach(order => { %>
+              <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="viewOrderDetails('<%= order.MasoDDH %>')">
+                <td class="px-4 py-3 font-semibold font-mono text-indigo-600"><%= order.MasoDDH %></td>
+                <td class="px-4 py-3"><%= order.NGAY ? new Date(order.NGAY).toLocaleDateString('vi-VN') : '-' %></td>
+                <td class="px-4 py-3 font-medium"><%= order.NhaCC %></td>
+                <td class="px-4 py-3 text-gray-600"><%= order.HoTenNV || ('Mã NV: ' + order.MANV) %></td>
+                <td class="px-4 py-3 text-center space-x-2">
+                  <button onclick="event.stopPropagation(); viewOrderDetails('<%= order.MasoDDH %>')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                    <i class="fa-solid fa-eye"></i> Xem SubForm
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Chưa có đơn đặt hàng nào.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

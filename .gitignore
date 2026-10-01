@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+
+# Excluded Markdown files per project rules
+ChuanHoaVaXacDinh.md
+De.md
+ImplementMap.md
+PhanTichNghiepVu.md
+docs/**/*.md
+docs/*.md

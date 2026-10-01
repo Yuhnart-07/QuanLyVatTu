@@ -1,0 +1,75 @@
+<!-- ====================================================================================
+     MODAL & CONFIRM & TOAST COMPONENT (Phong cách Sapo SaaS ERP)
+     ==================================================================================== -->
+
+<!-- 1. HỘP THOẠI MODAL DÙNG CHUNG (CHO FORM THÊM / SỬA / XEM CHI TIẾT) -->
+<div 
+  id="appModal" 
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity duration-200"
+  onclick="if(event.target === this) closeModal()"
+>
+  <div 
+    id="modalCard"
+    class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-slate-100 transform transition-all overflow-hidden"
+  >
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      <h3 id="modalTitle" class="text-base font-bold text-slate-800">Tiêu đề Form</h3>
+      <button 
+        type="button" 
+        onclick="closeModal()" 
+        class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-full transition"
+      >
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body (Hỗ trợ cuộn độc lập) -->
+    <div id="modalBody" class="p-6 overflow-y-auto flex-1">
+      <!-- Nội dung form động được nhúng vào đây qua JavaScript -->
+    </div>
+  </div>
+</div>
+
+<!-- 2. HỘP THOẠI XÁC NHẬN HÀNH ĐỘNG NGUY HIỂM (CONFIRM DIALOG - XÓA BẢN GHI) -->
+<div 
+  id="confirmModal" 
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity duration-200"
+  onclick="if(event.target === this) closeConfirmModal()"
+>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 transform transition-all text-center">
+    <!-- Icon cảnh báo -->
+    <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-500 mx-auto flex items-center justify-center mb-4 text-xl">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+
+    <h4 id="confirmModalTitle" class="text-lg font-bold text-slate-800 mb-2">
+      Xác nhận thao tác
+    </h4>
+    <p id="confirmModalMessage" class="text-xs text-slate-500 mb-6 leading-relaxed">
+      Dữ liệu bị xóa sẽ không thể phục hồi nếu vi phạm các ràng buộc dữ liệu liên quan.
+    </p>
+
+    <!-- Nút hành động -->
+    <div class="flex items-center justify-center space-x-3">
+      <button 
+        type="button" 
+        onclick="closeConfirmModal()" 
+        class="sapo-btn btn-sapo-cancel flex-1"
+      >
+        Hủy bỏ
+      </button>
+      <button 
+        type="button" 
+        id="confirmModalBtn" 
+        onclick="handleConfirmSubmit()" 
+        class="sapo-btn btn-sapo-delete flex-1"
+      >
+        Đồng ý
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. KHU VỰC CHỨA CÁC THÔNG BÁO TOAST TỰ TẮT (GÓC TRÊN PHẢI MÀN HÌNH) -->
+<div id="sapoToastContainer"></div>

@@ -1,0 +1,57 @@
+<!-- ====================================================================================
+     PAGINATION COMPONENT (Phong cách Sapo SaaS ERP - Chân bảng dữ liệu)
+     ==================================================================================== -->
+<div class="px-6 py-3.5 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 rounded-b-xl">
+  
+  <!-- 1. THỐNG KÊ SỐ BẢN GHI (BÊN TRÁI) -->
+  <div class="flex items-center space-x-1">
+    <span>Hiển thị</span>
+    <span class="font-semibold text-slate-700 font-mono" id="pageRangeText">1 - 10</span>
+    <span>trên tổng số</span>
+    <span class="font-semibold text-slate-700 font-mono" id="totalRecordsText">--</span>
+    <span>bản ghi</span>
+  </div>
+
+  <!-- 2. LỰA CHỌN SỐ LƯỢNG HIỂN THỊ (Ở GIỮA) -->
+  <div class="flex items-center space-x-2">
+    <span>Hiển thị:</span>
+    <select 
+      class="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-[#0088ff] focus:border-[#0088ff] outline-none cursor-pointer"
+      onchange="if(typeof changePageSize === 'function') changePageSize(this.value)"
+    >
+      <option value="10">10</option>
+      <option value="20" selected>20</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    <span>kết quả / trang</span>
+  </div>
+
+  <!-- 3. NÚT CHUYỂN TRANG TRÒN XANH (BÊN PHẢI) -->
+  <div class="flex items-center space-x-1">
+    <button 
+      type="button" 
+      class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition" 
+      title="Trang trước"
+    >
+      <i class="fa-solid fa-chevron-left text-[10px]"></i>
+    </button>
+    
+    <!-- Trang hiện tại (chấm tròn xanh Sapo) -->
+    <button 
+      type="button" 
+      class="w-7 h-7 flex items-center justify-center rounded-lg bg-[#0088ff] text-white font-semibold text-xs shadow-sm"
+    >
+      1
+    </button>
+    
+    <button 
+      type="button" 
+      class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition" 
+      title="Trang sau"
+    >
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+    </button>
+  </div>
+
+</div>

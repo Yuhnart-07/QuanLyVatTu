@@ -1,0 +1,81 @@
+<!-- View 1.2: Nhập Danh Mục Vật Tư -->
+<!-- Chức năng: Thêm, Xóa, Ghi, Phục hồi (Undo), Tìm kiếm, Thoát -->
+<!-- Tham chiếu: De.md Mục II.1.2 -->
+
+<div class="space-y-6">
+  <!-- Thanh công cụ & Tìm kiếm -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center space-x-2">
+      <button onclick="openCreateMaterialModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
+        <i class="fa-solid fa-plus"></i>
+        <span>Thêm</span>
+      </button>
+      <button id="btnUndoMaterial" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>Phục hồi (Undo)</span>
+      </button>
+      <button onclick="window.location.reload()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
+        <i class="fa-solid fa-arrow-rotate-right"></i>
+        <span>Làm mới</span>
+      </button>
+    </div>
+
+    <div class="relative w-full sm:w-72">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </span>
+      <input type="text" id="materialSearch" placeholder="Tìm theo tên vật tư, ĐVT..." 
+        class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+    </div>
+  </div>
+
+  <!-- Bảng dữ liệu vật tư -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+      <h2 class="font-bold text-gray-800 text-base">Danh Mục Vật Tư (Bảng Vattu)</h2>
+      <span class="text-xs text-gray-500">Mã vật tư: 4 ký tự | Tên duy nhất</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 border-b">Mã VT</th>
+            <th class="px-4 py-3 border-b">Tên vật tư</th>
+            <th class="px-4 py-3 border-b">Đơn vị tính</th>
+            <th class="px-4 py-3 border-b text-right">Số lượng tồn</th>
+            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="materialTableBody" class="divide-y divide-gray-100">
+          <% if (typeof materials !== 'undefined' && materials && materials.length > 0) { %>
+            <% materials.forEach(vt => { %>
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 font-semibold text-gray-900 font-mono"><%= vt.MAVT %></td>
+                <td class="px-4 py-3 font-medium"><%= vt.TENVT %></td>
+                <td class="px-4 py-3 text-gray-500"><%= vt.DVT %></td>
+                <td class="px-4 py-3 text-right font-mono font-medium <%= vt.Soluongton > 0 ? 'text-blue-600' : 'text-red-500' %>">
+                  <%= Number(vt.Soluongton).toLocaleString('vi-VN') %>
+                </td>
+                <td class="px-4 py-3 text-center space-x-2">
+                  <button onclick="editMaterial('<%= vt.MAVT %>')" class="text-indigo-600 hover:text-indigo-800">
+                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                  </button>
+                  <button onclick="deleteMaterial('<%= vt.MAVT %>')" class="text-red-600 hover:text-red-800">
+                    <i class="fa-solid fa-trash-can"></i> Xóa
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-gray-400">Chưa có danh mục vật tư.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- include('../components/pagination') %>
+  </div>
+</div>

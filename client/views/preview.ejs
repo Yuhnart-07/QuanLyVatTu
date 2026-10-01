@@ -1,0 +1,305 @@
+<!-- ======================================================= -->
+<!-- client/views/preview.ejs -->
+<!-- Trang tổng quan kiểm tra và trình diễn Bộ khung Design System (Sapo SaaS ERP) -->
+<!-- ======================================================= -->
+
+<div class="space-y-6">
+
+  <!-- 1. TIÊU ĐỀ TRANG & BREADCRUMB -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs text-slate-500 mb-1">
+        <a href="/preview" class="hover:text-blue-600 transition">Hệ thống</a>
+        <span>/</span>
+        <span class="text-slate-700 font-medium">Design System Demo</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+        <span>Giao Diện Mẫu Design System</span>
+        <span class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700">Sapo Style</span>
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">Trang kiểm thử các thành phần Base UI: Bảng dữ liệu, Thanh công cụ, Modal, Thông báo Toast và Phím tắt.</p>
+    </div>
+
+    <!-- Nút hành động nhanh -->
+    <div class="flex items-center gap-2">
+      <button onclick="QLVT.toast.info('Tính năng làm mới dữ liệu')" class="btn-sapo-secondary">
+        <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Làm mới
+      </button>
+      <button onclick="openCreateDemoModal()" class="btn-sapo-primary">
+        <i class="fa-solid fa-plus mr-1.5"></i> Thêm mới mẫu
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. KHU VỰC THỬ NGHIỆM TƯƠNG TÁC (INTERACTIVE PLAYGROUND) -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+      <i class="fa-solid fa-vial text-blue-500"></i> Bảng điều khiển thử nghiệm tương tác
+    </h3>
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Test Modal -->
+      <button onclick="QLVT.modal.open('demoModal')" class="px-3.5 py-2 text-sm font-medium bg-slate-800 hover:bg-slate-900 text-white rounded-lg shadow-sm transition">
+        <i class="fa-regular fa-window-restore mr-1.5"></i> Mở Modal Form
+      </button>
+
+      <!-- Test Confirm Dialog -->
+      <button onclick="testConfirmDialog()" class="px-3.5 py-2 text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Thử Confirm Xóa
+      </button>
+
+      <!-- Test Toasts -->
+      <button onclick="QLVT.toast.success('Đã lưu dữ liệu nhân viên thành công!')" class="px-3.5 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-circle-check mr-1.5"></i> Toast Success
+      </button>
+
+      <button onclick="QLVT.toast.error('Có lỗi xảy ra: Mã vật tư đã tồn tại!')" class="px-3.5 py-2 text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-circle-xmark mr-1.5"></i> Toast Error
+      </button>
+
+      <button onclick="QLVT.toast.info('Nhấn Ctrl + K để tìm kiếm nhanh mọi lúc.')" class="px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-circle-info mr-1.5"></i> Toast Info
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. BẢNG DỮ LIỆU CHUẨN SAPO (DATA TABLE) -->
+  <div class="sapo-card">
+    
+    <!-- Header của Card: Bộ lọc & Tìm kiếm -->
+    <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+      
+      <!-- Filter Tabs / Chips -->
+      <div class="flex items-center space-x-1 overflow-x-auto pb-1 md:pb-0">
+        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+          Tất cả (45)
+        </button>
+        <button class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+          Đang làm việc (42)
+        </button>
+        <button class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+          Đã nghỉ việc (3)
+        </button>
+      </div>
+
+      <!-- Ô tìm kiếm trong bảng -->
+      <div class="relative w-full md:w-80">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass text-xs"></i>
+        </span>
+        <input type="text" id="demoTableSearch" placeholder="Tìm theo mã NV, họ tên, địa chỉ..." 
+          class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+      </div>
+    </div>
+
+    <!-- Bảng nội dung -->
+    <div class="overflow-x-auto">
+      <table class="sapo-table">
+        <thead>
+          <tr>
+            <th class="w-12 text-center">
+              <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+            </th>
+            <th class="w-20">Mã NV</th>
+            <th>Họ và Tên</th>
+            <th>Địa Chỉ</th>
+            <th>Ngày Sinh</th>
+            <th class="text-right">Lương Cơ Bản</th>
+            <th class="text-center">Trạng Thái</th>
+            <th class="text-center w-28">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <!-- Dòng 1 -->
+          <tr>
+            <td class="text-center">
+              <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+            </td>
+            <td class="font-semibold text-slate-900 font-mono">1</td>
+            <td>
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                  NV
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900">Nguyễn Văn An</div>
+                  <div class="text-[11px] text-slate-400">an.nguyen@qlvt.local</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-slate-600">Quận 1, TP. Hồ Chí Minh</td>
+            <td class="text-slate-600 font-mono text-xs">15/05/1990</td>
+            <td class="text-right font-mono font-semibold text-slate-900">12,500,000 đ</td>
+            <td class="text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Đang làm việc
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button onclick="QLVT.toast.info('Xem chi tiết NV 1')" class="p-1.5 text-slate-400 hover:text-blue-600 rounded transition" title="Sửa">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button onclick="testConfirmDialog()" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition" title="Xóa">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Dòng 2 -->
+          <tr>
+            <td class="text-center">
+              <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+            </td>
+            <td class="font-semibold text-slate-900 font-mono">2</td>
+            <td>
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                  TB
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900">Trần Thị Bích</div>
+                  <div class="text-[11px] text-slate-400">bich.tran@qlvt.local</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-slate-600">Bình Thạnh, TP. Hồ Chí Minh</td>
+            <td class="text-slate-600 font-mono text-xs">20/08/1992</td>
+            <td class="text-right font-mono font-semibold text-slate-900">10,800,000 đ</td>
+            <td class="text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Đang làm việc
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 rounded transition" title="Sửa">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button onclick="testConfirmDialog()" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition" title="Xóa">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Dòng 3 -->
+          <tr>
+            <td class="text-center">
+              <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+            </td>
+            <td class="font-semibold text-slate-900 font-mono">3</td>
+            <td>
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+                  LC
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900">Lê Hoàng Cường</div>
+                  <div class="text-[11px] text-slate-400">cuong.le@qlvt.local</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-slate-600">Thủ Đức, TP. Hồ Chí Minh</td>
+            <td class="text-slate-600 font-mono text-xs">10/11/1988</td>
+            <td class="text-right font-mono font-semibold text-slate-900">15,000,000 đ</td>
+            <td class="text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span> Đã nghỉ việc
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 rounded transition" title="Sửa">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button onclick="testConfirmDialog()" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition" title="Xóa">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phân trang Sapo -->
+    <%- include('./components/pagination') %>
+  </div>
+
+</div>
+
+<!-- MODAL DEMO MẪU -->
+<div id="demoModal" class="modal-overlay hidden">
+  <div class="modal-card max-w-lg">
+    <div class="modal-header">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Thêm Mới Nhân Viên</h3>
+      </div>
+      <button onclick="QLVT.modal.close('demoModal')" class="text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Họ đệm <span class="text-rose-500">*</span></label>
+          <input type="text" placeholder="Nguyễn Văn" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Tên <span class="text-rose-500">*</span></label>
+          <input type="text" placeholder="An" class="form-input">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label">Địa chỉ</label>
+        <input type="text" placeholder="Quận 1, TP. Hồ Chí Minh" class="form-input">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Ngày sinh</label>
+          <input type="date" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Lương cơ bản (>= 5,000,000)</label>
+          <input type="number" value="5000000" min="5000000" step="500000" class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" onclick="QLVT.modal.close('demoModal')" class="btn-sapo-secondary">Hủy bỏ</button>
+      <button type="button" onclick="handleSaveDemo()" class="btn-sapo-primary">Lưu nhân viên</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openCreateDemoModal() {
+    QLVT.modal.open('demoModal');
+  }
+
+  function handleSaveDemo() {
+    QLVT.modal.close('demoModal');
+    QLVT.toast.success('Đã lưu thông tin nhân viên mẫu thành công!');
+  }
+
+  function testConfirmDialog() {
+    QLVT.confirm({
+      title: 'Xác nhận xóa nhân viên?',
+      message: 'Bạn có chắc chắn muốn xóa nhân viên Nguyễn Văn An (Mã NV: 1)? Dữ liệu sau khi xóa sẽ không thể phục hồi.',
+      type: 'danger',
+      confirmText: 'Đồng ý xóa',
+      cancelText: 'Bỏ qua',
+      onConfirm: function() {
+        QLVT.toast.success('Đã xóa nhân viên thành công!');
+      }
+    });
+  }
+</script>
