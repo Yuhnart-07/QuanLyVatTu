@@ -1,4 +1,5 @@
 <!-- View Đăng nhập (Login) -->
+<!-- Tham chiếu: ImplementMap.md mục 7.1, ChuanHoaVaXacDinh.md FR13 -->
 <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
   <div class="text-center mb-8">
     <div class="inline-flex p-3 bg-indigo-100 text-indigo-600 rounded-full mb-3">
@@ -8,6 +9,14 @@
     <p class="text-sm text-gray-500 mt-1">Phần mềm Quản lý Nhập/Xuất Vật Tư</p>
   </div>
 
+  <!-- Thông báo lỗi đăng nhập (flash error từ Controller) -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-sm text-red-700">
+      <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
   <form action="/auth/login" method="POST" class="space-y-5">
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập (SQL Server Login)</label>
@@ -15,7 +24,7 @@
         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
           <i class="fa-solid fa-user"></i>
         </span>
-        <input type="text" name="username" required placeholder="Nhập username..." 
+        <input type="text" name="username" required placeholder="Nhập username (VD: NV_1)..." 
           class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
       </div>
     </div>
