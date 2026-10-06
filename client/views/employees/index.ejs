@@ -1,86 +1,259 @@
-<!-- View 1.1: Nhập Danh Sách Nhân Viên -->
-<!-- Chức năng: Thêm, Xóa, Ghi, Phục hồi (Undo), Tìm kiếm, Thoát -->
-<!-- Tham chiếu: De.md Mục II.1.1 -->
+<!-- ======================================================= -->
+<!-- client/views/employees/index.ejs -->
+<!-- Mục 1.1: Quản Lý Nhân Viên (Thêm, Xóa, Sửa, Phục hồi Undo 1 bước, Tìm kiếm) -->
+<!-- Phong cách: Sapo SaaS ERP / Modern Inventory -->
+<!-- Tham chiếu: De.md Mục II.1.1, PhanTichNghiepVu.md UC01, BR01, BR11 -->
+<!-- ======================================================= -->
 
 <div class="space-y-6">
-  <!-- Thanh công cụ & Tìm kiếm -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-    <div class="flex items-center space-x-2">
-      <button onclick="openCreateEmployeeModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
-        <i class="fa-solid fa-plus"></i>
-        <span>Thêm</span>
-      </button>
-      <button id="btnUndo" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
-        <i class="fa-solid fa-rotate-left"></i>
-        <span>Phục hồi (Undo)</span>
-      </button>
-      <button onclick="window.location.reload()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition">
-        <i class="fa-solid fa-arrow-rotate-right"></i>
-        <span>Làm mới</span>
-      </button>
+
+  <!-- 1. BREADCRUMB & TIÊU ĐỀ TRANG -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs text-slate-500 mb-1">
+        <a href="/" class="hover:text-blue-600 transition">Hệ thống</a>
+        <span>/</span>
+        <span class="text-slate-500">Quản lý Danh mục</span>
+        <span>/</span>
+        <span class="text-slate-700 font-medium">Danh Sách Nhân Viên</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+        <span>Quản Lý Nhân Viên</span>
+        <span class="px-2.5 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700">Mục 1.1</span>
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Quản lý danh mục nhân sự, tiền lương, hỗ trợ thêm/sửa/xóa và phục hồi (Undo) 1 bước gần nhất.
+      </p>
     </div>
 
-    <!-- Thanh tìm kiếm -->
-    <div class="relative w-full sm:w-72">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </span>
-      <input type="text" id="employeeSearch" placeholder="Tìm theo tên, họ, địa chỉ..." 
-        class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+    <!-- Thanh nút hành động nhanh -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Nút Phục hồi (Undo) 1 bước gần nhất -->
+      <button 
+        id="btnUndo" 
+        type="button"
+        onclick="handleUndoClick()" 
+        class="sapo-btn btn-sapo-undo <%= (typeof undoState !== 'undefined' && undoState && undoState.canUndo) ? '' : 'opacity-50 cursor-not-allowed' %>"
+        <%= (typeof undoState !== 'undefined' && undoState && undoState.canUndo) ? '' : 'disabled' %>
+        title="<%= (typeof undoState !== 'undefined' && undoState && undoState.lastAction?.description) ? 'Phục hồi thao tác: ' + undoState.lastAction.description : 'Chưa có thao tác nào để phục hồi' %>"
+      >
+        <i class="fa-solid fa-rotate-left mr-1"></i>
+        <span>Phục hồi (Undo)</span>
+      </button>
+
+      <!-- Nút Làm mới -->
+      <button 
+        type="button"
+        onclick="window.location.reload()" 
+        class="sapo-btn btn-sapo-outline" 
+        title="Tải lại trang"
+      >
+        <i class="fa-solid fa-arrows-rotate mr-1"></i>
+        <span>Làm mới</span>
+      </button>
+
+      <!-- Nút Thêm mới nhân viên -->
+      <button 
+        type="button"
+        onclick="openCreateEmployeeModal()" 
+        class="sapo-btn btn-sapo-primary" 
+        title="Thêm nhân viên mới"
+      >
+        <i class="fa-solid fa-user-plus mr-1"></i>
+        <span>Thêm nhân viên</span>
+      </button>
     </div>
   </div>
 
-  <!-- Bảng dữ liệu nhân viên -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-      <h2 class="font-bold text-gray-800 text-base">Danh Sách Nhân Viên (Bảng Nhanvien)</h2>
-      <span class="text-xs text-gray-500">Lương tối thiểu: 5,000,000 VNĐ</span>
+  <!-- 2. THẺ THỐNG KÊ TỔNG QUAN (QUICK METRICS) -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Tổng số nhân viên -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Nhân Sự</div>
+        <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="statTotalEmployees">
+          <%= (typeof employees !== 'undefined' && employees) ? employees.length : 0 %>
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-users"></i>
+      </div>
     </div>
 
+    <!-- Mức lương tối thiểu theo BR01 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quy Tắc Lương Tối Thiểu</div>
+        <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">
+          5,000,000 đ
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl" title="Ràng buộc BR01: Lương >= 5.000.000 VNĐ">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+    </div>
+
+    <!-- Tổng quỹ lương -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Quỹ Lương Cơ Bản</div>
+        <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="statTotalSalary">
+          <% 
+            let total = 0;
+            if (typeof employees !== 'undefined' && employees) {
+              total = employees.reduce((sum, e) => sum + (Number(e.LUONG) || 0), 0);
+            }
+          %>
+          <%= Number(total).toLocaleString('vi-VN') %> đ
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-money-bill-wave"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. BẢNG DỮ LIỆU CHUẨN SAPO (DATA TABLE CARD) -->
+  <div class="sapo-card">
+    
+    <!-- Header của Card: Bộ lọc & Ô Tìm kiếm thời gian thực -->
+    <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white rounded-t-xl">
+      
+      <!-- Filter Tabs chuẩn Sapo -->
+      <div class="flex items-center space-x-2">
+        <button class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Tất cả nhân viên</span>
+          <span class="bg-blue-200/80 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono">
+            <%= (typeof employees !== 'undefined' && employees) ? employees.length : 0 %>
+          </span>
+        </button>
+      </div>
+
+      <!-- Ô tìm kiếm trong bảng -->
+      <div class="relative w-full md:w-80">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass text-xs"></i>
+        </span>
+        <input 
+          type="text" 
+          id="employeeSearch" 
+          placeholder="Tìm theo Mã NV, Họ tên, Địa chỉ..." 
+          class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0088ff]/20 focus:border-[#0088ff] transition"
+        >
+      </div>
+    </div>
+
+    <!-- Bảng nội dung danh sách -->
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+      <table class="sapo-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3 border-b">Mã NV</th>
-            <th class="px-4 py-3 border-b">Họ</th>
-            <th class="px-4 py-3 border-b">Tên</th>
-            <th class="px-4 py-3 border-b">Địa chỉ</th>
-            <th class="px-4 py-3 border-b">Ngày sinh</th>
-            <th class="px-4 py-3 border-b text-right">Lương (VNĐ)</th>
-            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+            <th class="w-20">Mã NV</th>
+            <th>Họ và Tên</th>
+            <th>Địa Chỉ</th>
+            <th class="w-28">Ngày Sinh</th>
+            <th class="text-right w-36">Lương Cơ Bản</th>
+            <th>Ghi Chú</th>
+            <th class="text-center w-28">Thao Tác</th>
           </tr>
         </thead>
-        <tbody id="employeeTableBody" class="divide-y divide-gray-100">
+        <tbody id="employeeTableBody" class="divide-y divide-slate-100">
           <% if (typeof employees !== 'undefined' && employees && employees.length > 0) { %>
             <% employees.forEach(emp => { %>
-              <tr class="hover:bg-gray-50 transition">
-                <td class="px-4 py-3 font-semibold text-gray-900"><%= emp.MANV %></td>
-                <td class="px-4 py-3"><%= emp.HO %></td>
-                <td class="px-4 py-3 font-medium"><%= emp.TEN %></td>
-                <td class="px-4 py-3 text-gray-500"><%= emp.DIACHI || '-' %></td>
-                <td class="px-4 py-3"><%= emp.NGAYSINH ? new Date(emp.NGAYSINH).toLocaleDateString('vi-VN') : '-' %></td>
-                <td class="px-4 py-3 text-right font-mono font-medium text-emerald-600">
-                  <%= Number(emp.LUONG).toLocaleString('vi-VN') %>
+              <% 
+                const initials = (emp.TEN ? emp.TEN[0] : 'NV').toUpperCase();
+                const fullName = `${emp.HO || ''} ${emp.TEN || ''}`.trim();
+              %>
+              <tr class="hover:bg-slate-50/80 transition" 
+                  data-manv="<%= emp.MANV %>" 
+                  data-ho="<%= emp.HO || '' %>" 
+                  data-ten="<%= emp.TEN || '' %>" 
+                  data-diachi="<%= emp.DIACHI || '' %>" 
+                  data-ngaysinh="<%= emp.NGAYSINH ? new Date(emp.NGAYSINH).toISOString().split('T')[0] : '' %>" 
+                  data-luong="<%= emp.LUONG || 0 %>" 
+                  data-ghichu="<%= emp.GHICHU || '' %>">
+                
+                <!-- Mã NV -->
+                <td class="sapo-cell-code font-bold font-mono text-slate-900">
+                  <%= emp.MANV %>
                 </td>
-                <td class="px-4 py-3 text-center space-x-2">
-                  <button onclick="editEmployee(<%= emp.MANV %>)" class="text-indigo-600 hover:text-indigo-800">
-                    <i class="fa-solid fa-pen-to-square"></i> Sửa
-                  </button>
-                  <button onclick="deleteEmployee(<%= emp.MANV %>)" class="text-red-600 hover:text-red-800">
-                    <i class="fa-solid fa-trash-can"></i> Xóa
-                  </button>
+
+                <!-- Họ và Tên kèm avatar -->
+                <td>
+                  <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                      <%= initials %>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-slate-900"><%= fullName %></div>
+                      <div class="text-[11px] text-slate-400 font-mono">NV_<%= emp.MANV %></div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Địa chỉ -->
+                <td class="text-slate-600 max-w-[200px] truncate" title="<%= emp.DIACHI || '-' %>">
+                  <%= emp.DIACHI || '-' %>
+                </td>
+
+                <!-- Ngày sinh -->
+                <td class="text-slate-600 font-mono text-xs">
+                  <%= emp.NGAYSINH ? new Date(emp.NGAYSINH).toLocaleDateString('vi-VN') : '-' %>
+                </td>
+
+                <!-- Lương (Căn phải, màu emerald, font mono) -->
+                <td class="sapo-cell-amount font-semibold text-emerald-600">
+                  <%= Number(emp.LUONG || 0).toLocaleString('vi-VN') %> đ
+                </td>
+
+                <!-- Ghi chú -->
+                <td class="text-slate-500 text-xs max-w-[150px] truncate" title="<%= emp.GHICHU || '-' %>">
+                  <%= emp.GHICHU || '-' %>
+                </td>
+
+                <!-- Thao tác: Sửa, Xóa -->
+                <td class="text-center">
+                  <div class="inline-flex items-center space-x-1">
+                    <button 
+                      type="button" 
+                      onclick="editEmployee(<%= emp.MANV %>)" 
+                      class="sapo-btn-icon" 
+                      title="Chỉnh sửa hồ sơ"
+                    >
+                      <i class="fa-regular fa-pen-to-square text-sm"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      onclick="deleteEmployee(<%= emp.MANV %>, '<%= fullName.replace(/'/g, "\\'") %>')" 
+                      class="sapo-btn-icon delete" 
+                      title="Xóa nhân viên"
+                    >
+                      <i class="fa-regular fa-trash-can text-sm"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="7" class="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu nhân viên.</td>
+              <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <i class="fa-solid fa-users-slash text-4xl mb-3 text-slate-300"></i>
+                  <span class="text-sm font-medium">Chưa có dữ liệu nhân viên nào trong hệ thống.</span>
+                </div>
+              </td>
             </tr>
           <% } %>
         </tbody>
       </table>
     </div>
 
+    <!-- Thanh phân trang Sapo -->
     <%- include('../components/pagination') %>
   </div>
+
 </div>
+
+<!-- Nạp file JavaScript xử lý riêng cho nghiệp vụ Quản lý Nhân viên -->
+<script src="/js/employees.js"></script>

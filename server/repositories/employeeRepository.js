@@ -15,7 +15,7 @@ exports.getAll = async () => {
 exports.getById = async (manv) => {
   const pool = await getPool();
   const result = await pool.request()
-    .input('MANV', sql.Int, manv)
+    .input('MANV', sql.Int, parseInt(manv, 10))
     .execute('sp_NhanVien_GetById');
   return result.recordset[0] || null;
 };
@@ -23,35 +23,35 @@ exports.getById = async (manv) => {
 exports.create = async ({ manv, ho, ten, diachi, ngaysinh, luong, ghichu }) => {
   const pool = await getPool();
   await pool.request()
-    .input('MANV', sql.Int, manv)
+    .input('MANV', sql.Int, parseInt(manv, 10))
     .input('HO', sql.NVarChar(40), ho)
     .input('TEN', sql.NVarChar(10), ten)
     .input('DIACHI', sql.NVarChar(100), diachi || null)
-    .input('NGAYSINH', sql.Date, ngaysinh || null)
+    .input('NGAYSINH', sql.Date, ngaysinh ? new Date(ngaysinh) : null)
     .input('LUONG', sql.Float, luong ? parseFloat(luong) : null)
-    .input('GHICHU', sql.Text, ghichu || null)
+    .input('GHICHU', sql.NVarChar(sql.MAX), ghichu || null)
     .execute('sp_NhanVien_Create');
-  return { manv, ho, ten };
+  return { manv: parseInt(manv, 10), ho, ten, diachi, ngaysinh, luong, ghichu };
 };
 
 exports.update = async (manv, { ho, ten, diachi, ngaysinh, luong, ghichu }) => {
   const pool = await getPool();
   await pool.request()
-    .input('MANV', sql.Int, manv)
+    .input('MANV', sql.Int, parseInt(manv, 10))
     .input('HO', sql.NVarChar(40), ho)
     .input('TEN', sql.NVarChar(10), ten)
     .input('DIACHI', sql.NVarChar(100), diachi || null)
-    .input('NGAYSINH', sql.Date, ngaysinh || null)
+    .input('NGAYSINH', sql.Date, ngaysinh ? new Date(ngaysinh) : null)
     .input('LUONG', sql.Float, luong ? parseFloat(luong) : null)
-    .input('GHICHU', sql.Text, ghichu || null)
+    .input('GHICHU', sql.NVarChar(sql.MAX), ghichu || null)
     .execute('sp_NhanVien_Update');
-  return { manv, ho, ten };
+  return { manv: parseInt(manv, 10), ho, ten, diachi, ngaysinh, luong, ghichu };
 };
 
 exports.delete = async (manv) => {
   const pool = await getPool();
   await pool.request()
-    .input('MANV', sql.Int, manv)
+    .input('MANV', sql.Int, parseInt(manv, 10))
     .execute('sp_NhanVien_Delete');
   return true;
 };
