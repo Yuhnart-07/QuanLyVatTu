@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
-    "db:setup": "node server/scripts/setupDatabase.js"
+    "db:setup": "node server/scripts/setupDatabase.js",
+    "db:update": "node server/scripts/updateDatabase.js"
   },
   "keywords": [
     "qlvt",

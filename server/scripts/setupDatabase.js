@@ -2,13 +2,15 @@
 // server/scripts/setupDatabase.js
 // Script tự động hóa toàn bộ quy trình thiết lập Database QLVT
 // Chạy bằng lệnh: npm run db:setup
-// Tự động thực thi:
-//   1. Đảm bảo Database QLVT tồn tại
-//   2. Khởi tạo 8 bảng dữ liệu (schema)
-//   3. Tạo các Database Roles (Admin, Nhanvien) & phân quyền
-//   4. Tự động nạp toàn bộ Stored Procedures trong database/procedures/
-//   5. Nạp dữ liệu mẫu (Seed Data)
-//   6. Tạo sẵn các Login & User SQL Server mẫu (NV_1, NV_2) để test login
+// Tự động thực thi theo quy trình 8 bước chuẩn:
+//   [1/8] Kiểm tra & tạo Database QLVT (kết nối 'master')
+//   [2/8] Khởi tạo cấu trúc 8 bảng dữ liệu (database/init_database.sql)
+//   [3/8] Thiết lập Database Roles (Admin, Nhanvien) & phân quyền toàn diện
+//   [4/8] Quét và nạp toàn bộ FUNCTIONS (database/functions/)
+//   [5/8] Quét và nạp toàn bộ STORED PROCEDURES (database/procedures/)
+//   [6/8] Nạp dữ liệu mẫu kiểm thử Seed Data (database/seed/seed_data.sql)
+//   [7/8] Quét và nạp toàn bộ TRIGGERS (database/triggers/)
+//   [8/8] Tạo tài khoản SQL Server Logins kiểm thử (NV_1, NV_2)
 // =======================================================
 
 require('dotenv').config();
@@ -32,11 +34,18 @@ const DB_NAME = process.env.DB_NAME || 'QLVT';
 
 /**
  * Tách một chuỗi nội dung SQL thành nhiều batch độc lập dựa vào lệnh 'GO'
+ * Lọc sạch các dòng lệnh USE [database]; hoặc USE database; ở đầu/trong batch
+ * nhằm tuân thủ nghiêm ngặt quy tắc SQL Server:
+ * "CREATE FUNCTION / PROCEDURE / TRIGGER must be the first statement in a query batch"
  */
 function splitSqlBatches(sqlContent) {
   return sqlContent
     .split(/^\s*GO\s*$/gmi)
-    .map(batch => batch.trim())
+    .map(batch => {
+      return batch
+        .replace(/^\s*USE\s+\[?[a-zA-Z0-9_]+\]?\s*;?\s*$/gmi, '')
+        .trim();
+    })
     .filter(batch => batch.length > 0);
 }
 
@@ -57,6 +66,38 @@ async function executeSqlFile(pool, filePath) {
   }
 }
 
+/**
+ * Quét và nạp toàn bộ file SQL trong một thư mục logic
+ * Bỏ qua .gitkeep và các file không phải .sql; thông báo rõ ràng nếu thư mục trống.
+ */
+async function executeSqlDirectory(pool, relativeDir, objectType) {
+  const dirPath = path.join(__dirname, '../../', relativeDir);
+  console.log(`\n📂 [${objectType}] Đang quét thư mục [${relativeDir}]...`);
+
+  if (!fs.existsSync(dirPath)) {
+    console.log(`   ⚠️ Thư mục [${relativeDir}] không tồn tại.`);
+    return 0;
+  }
+
+  const files = fs.readdirSync(dirPath)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+
+  if (files.length === 0) {
+    console.log(`   ℹ️ Thư mục [${relativeDir}] hiện chưa có file .sql nào (sẵn sàng khi thêm mới).`);
+    return 0;
+  }
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    await executeSqlFile(pool, filePath);
+    console.log(`   ⚡ Đã nạp ${objectType}: [${file}]`);
+  }
+
+  console.log(`   ✅ Đã nạp thành công ${files.length} ${objectType}(s).`);
+  return files.length;
+}
+
 async function runSetup() {
   console.log('===============================================================');
   console.log('🚀 [QLVT] BẮT ĐẦU QUY TRÌNH THIẾT LẬP DATABASE TỰ ĐỘNG');
@@ -70,7 +111,7 @@ async function runSetup() {
     // -----------------------------------------------------------------
     // BƯỚC 1: Kết nối 'master' để đảm bảo Database QLVT đã tồn tại
     // -----------------------------------------------------------------
-    console.log(`👉 [1/6] Kiểm tra & khởi tạo CSDL [${DB_NAME}]...`);
+    console.log(`👉 [1/8] Kiểm tra & khởi tạo CSDL [${DB_NAME}]...`);
     masterPool = await sql.connect({ ...dbConfig, database: 'master' });
     
     await masterPool.request().batch(`
@@ -92,7 +133,7 @@ async function runSetup() {
     // -----------------------------------------------------------------
     // BƯỚC 3: Tạo 8 bảng dữ liệu từ init_database.sql
     // -----------------------------------------------------------------
-    console.log('👉 [2/6] Khởi tạo cấu trúc 8 bảng dữ liệu...');
+    console.log('\n👉 [2/8] Khởi tạo cấu trúc 8 bảng dữ liệu...');
     const initDbPath = path.join(__dirname, '../../database/init_database.sql');
     await executeSqlFile(qlvtPool, initDbPath);
     console.log('   ✅ Đã khởi tạo 8 bảng thành công.');
@@ -100,7 +141,7 @@ async function runSetup() {
     // -----------------------------------------------------------------
     // BƯỚC 4: Tạo Roles và Phân quyền (Admin, Nhanvien)
     // -----------------------------------------------------------------
-    console.log('👉 [3/6] Thiết lập Database Roles (Admin, Nhanvien)...');
+    console.log('\n👉 [3/8] Thiết lập Database Roles (Admin, Nhanvien) & Phân quyền...');
     await qlvtPool.request().batch(`
       -- Tạo Role Admin nếu chưa có
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'Admin' AND type = 'R')
@@ -113,44 +154,46 @@ async function runSetup() {
       -- Cấp quyền cho Admin (Toàn quyền quản trị DB)
       ALTER ROLE db_owner ADD MEMBER [Admin];
 
-      -- Cấp quyền cho Nhanvien (Thực thi SP và Thao tác dữ liệu)
+      -- Cấp quyền cho Nhanvien:
+      -- EXECUTE: áp dụng cho Scalar Functions & Stored Procedures
+      -- SELECT, INSERT, UPDATE, DELETE: áp dụng cho Bảng & Table-Valued Functions
       GRANT EXECUTE TO [Nhanvien];
-      GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO [Nhanvien];
+      GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::dbo TO [Nhanvien];
     `);
     console.log('   ✅ Thiết lập Roles & Phân quyền hoàn tất.');
 
     // -----------------------------------------------------------------
-    // BƯỚC 5: Tự động quét và nạp toàn bộ Stored Procedures
+    // BƯỚC 5: Tự động quét và nạp toàn bộ Functions (database/functions/)
     // -----------------------------------------------------------------
-    console.log('👉 [4/6] Quét và nạp toàn bộ Stored Procedures...');
-    const proceduresDir = path.join(__dirname, '../../database/procedures');
-    const procedureFiles = fs.readdirSync(proceduresDir)
-      .filter(f => f.endsWith('.sql'))
-      .sort();
-
-    if (procedureFiles.length === 0) {
-      console.log('   ⚠️  Không tìm thấy file Stored Procedure nào trong database/procedures/');
-    } else {
-      for (const file of procedureFiles) {
-        const filePath = path.join(proceduresDir, file);
-        await executeSqlFile(qlvtPool, filePath);
-        console.log(`   ⚡ Đã nạp Stored Procedure: [${file}]`);
-      }
-      console.log(`   ✅ Đã nạp thành công ${procedureFiles.length} Stored Procedure(s).`);
-    }
+    console.log('\n👉 [4/8] Quét và nạp toàn bộ Functions (Hàm người dùng)...');
+    const fnCount = await executeSqlDirectory(qlvtPool, 'database/functions', 'FUNCTION');
 
     // -----------------------------------------------------------------
-    // BƯỚC 6: Nạp dữ liệu mẫu (Seed Data)
+    // BƯỚC 6: Tự động quét và nạp toàn bộ Stored Procedures (database/procedures/)
     // -----------------------------------------------------------------
-    console.log('👉 [5/6] Nạp dữ liệu mẫu kiểm thử (Seed Data)...');
+    console.log('\n👉 [5/8] Quét và nạp toàn bộ Stored Procedures (Thủ tục lưu trữ)...');
+    const spCount = await executeSqlDirectory(qlvtPool, 'database/procedures', 'PROCEDURE');
+
+    // -----------------------------------------------------------------
+    // BƯỚC 7: Nạp dữ liệu mẫu kiểm thử (Seed Data)
+    // (Được nạp TRƯỚC Triggers để tránh trigger tính tồn kho làm lệch số liệu ban đầu)
+    // -----------------------------------------------------------------
+    console.log('\n👉 [6/8] Nạp dữ liệu mẫu kiểm thử (Seed Data)...');
     const seedPath = path.join(__dirname, '../../database/seed/seed_data.sql');
     await executeSqlFile(qlvtPool, seedPath);
     console.log('   ✅ Đã nạp Seed Data cho cả 8 bảng thành công.');
 
     // -----------------------------------------------------------------
-    // BƯỚC 7: Tạo các SQL Server Logins & Users mẫu phục vụ kiểm thử
+    // BƯỚC 8: Tự động quét và nạp toàn bộ Triggers (database/triggers/)
+    // (Được nạp SAU Seed Data để bảo vệ số lượng tồn kho ban đầu)
     // -----------------------------------------------------------------
-    console.log('👉 [6/6] Tạo tài khoản SQL Server Logins kiểm thử (NV_1, NV_2)...');
+    console.log('\n👉 [7/8] Quét và nạp toàn bộ Triggers (Bộ kích hoạt)...');
+    const trCount = await executeSqlDirectory(qlvtPool, 'database/triggers', 'TRIGGER');
+
+    // -----------------------------------------------------------------
+    // BƯỚC 9: Tạo các SQL Server Logins & Users mẫu phục vụ kiểm thử
+    // -----------------------------------------------------------------
+    console.log('\n👉 [8/8] Tạo tài khoản SQL Server Logins kiểm thử (NV_1, NV_2)...');
     await qlvtPool.request().batch(`
       -- 1. Tài khoản Quản trị: NV_1 (MANV = 1, Role: Admin)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_1')
@@ -182,6 +225,13 @@ async function runSetup() {
 
     console.log('\n===============================================================');
     console.log('🎉🎉 THIẾT LẬP DATABASE QLVT THÀNH CÔNG 100%! BẠN CÓ THỂ CHẠY WEB NGAY!');
+    console.log('📊 Thống kê đối tượng nạp vào:');
+    console.log(`   • Cấu trúc 8 bảng dữ liệu: Đầy đủ (database/init_database.sql)`);
+    console.log(`   • Functions              : ${fnCount} file`);
+    console.log(`   • Stored Procedures      : ${spCount} file`);
+    console.log(`   • Dữ liệu mẫu (Seed)     : Hoàn tất`);
+    console.log(`   • Triggers               : ${trCount} file`);
+    console.log(`   • Logins kiểm thử        : NV_1 (Admin), NV_2 (Nhanvien)`);
     console.log('👉 Khởi động web: npm run dev (hoặc npm start)');
     console.log('===============================================================\n');
 

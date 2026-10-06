@@ -13,30 +13,65 @@ Dự án phát triển ứng dụng quản lý vật tư theo mô hình phân t�
 
 ---
 
-## 2. HƯỚNG DẪN KHỞI TẠO CƠ SỞ DỮ LIỆU
+## 2. HƯỚNG DẪN KHỞI TẠO & CẬP NHẬT CƠ SỞ DỮ LIỆU
 
-### Cách 1: Tự động hóa qua dòng lệnh (Khuyên dùng cho toàn đội ngũ)
-Đảm bảo bạn đã cấu hình đúng thông tin kết nối SQL Server trong file `.env`. Sau đó chạy đúng 1 lệnh:
-```bash
-npm run db:setup
-```
-Lệnh trên sẽ tự động:
-* Tạo CSDL `QLVT` (nếu chưa có).
-* Khởi tạo đầy đủ cấu trúc 8 bảng theo chuẩn đề bài.
-* Thiết lập 2 Database Roles: `Admin` và `Nhanvien`.
-* Tự động quét và nạp **toàn bộ Stored Procedures** trong thư mục `database/procedures/`.
-* Nạp toàn bộ **dữ liệu mẫu (Seed Data)** cho cả 8 bảng.
-* Khởi tạo sẵn 2 tài khoản Login SQL Server để kiểm thử chức năng Đăng nhập / Phân quyền ngay lập tức:
-  * 👤 **Quản trị viên (Admin):** Username = `NV_1` | Mật khẩu = `123456`
-  * 👤 **Nhân viên (Nhanvien):** Username = `NV_2` | Mật khẩu = `123456`
+Đảm bảo bạn đã cấu hình đúng thông tin kết nối SQL Server trong file `.env` trước khi thực thi.
 
 ---
 
-### Cách 2: Chạy thủ công trên SQL Server Management Studio (SSMS)
+### 🟢 Trường hợp A: Cập nhật CSDL khi đang làm việc (KHUYÊN DÙNG HẰNG NGÀY - BẢO TOÀN DỮ LIỆU)
+
+> **Dành cho:** Thành viên **đã có CSDL** và đang nhập liệu/kiểm thử. Khi bạn vừa `git pull` code mới về và thấy có Stored Procedure mới hoặc được cập nhật:
+
+Chạy đúng 1 lệnh duy nhất:
+```bash
+npm run db:update
+```
+
+**Cơ chế hoạt động:**
+* Tự động quét và đồng bộ **3 thành phần logic CSDL** từ source code:
+  * 📂 `database/functions/`: Tự động nạp các Hàm người dùng mới hoặc làm mới khi sửa đổi.
+  * 📂 `database/procedures/`: Tự động nạp các Stored Procedures mới hoặc làm mới phiên bản mới nhất.
+  * 📂 `database/triggers/`: Tự động nạp các Triggers (bộ kích hoạt) mới hoặc làm mới.
+* Tự động kiểm tra và bổ sung Roles (`Admin`, `Nhanvien`), quyền hạn (`GRANT EXECUTE`) và Logins kiểm thử nếu còn thiếu (`IF NOT EXISTS`).
+* 🛡️ **CAM KẾT AN TOÀN:**
+  * **BỎ QUA** thư mục `database/tables/` và `database/seed/`.
+  * **Tuyệt đối KHÔNG xóa bảng (`DROP TABLE`), KHÔNG sửa bảng, KHÔNG xóa dữ liệu (`DELETE`). Toàn bộ 8 bảng và dữ liệu bạn đang làm việc được bảo toàn 100% nguyên vẹn.**
+
+---
+
+### 🟡 Trường hợp B: Khởi tạo lần đầu hoặc Reset trắng dữ liệu về mặc định
+
+> **Dành cho:** Thành viên **vừa clone dự án lần đầu tiên**, chưa có database trong SQL Server, HOẶC muốn xóa sạch sẽ dữ liệu cũ để nạp lại dữ liệu mẫu chuẩn (Seed data):
+
+Chạy lệnh:
+```bash
+npm run db:setup
+```
+
+**Lệnh trên sẽ tự động thực thi chuỗi 8 bước hoàn chỉnh:**
+1. **Kiểm tra & tạo CSDL `QLVT`:** Kết nối `master`, tạo database nếu chưa có.
+2. **Khởi tạo 8 bảng dữ liệu:** Chạy file [`database/init_database.sql`](file:///c:/Users/tiger/Documents/QLVT/database/init_database.sql).
+3. **Thiết lập Database Roles & Phân quyền:** Tạo role `Admin` (`db_owner`) và `Nhanvien` (cấp quyền `EXECUTE` cho SP/Scalar Function và `SELECT, INSERT, UPDATE, DELETE` cho bảng/Table-Valued Function).
+4. **Quét & nạp toàn bộ Functions:** Tự động nạp tất cả file `.sql` trong [`database/functions/`](file:///c:/Users/tiger/Documents/QLVT/database/functions/).
+5. **Quét & nạp toàn bộ Stored Procedures:** Tự động nạp tất cả file `.sql` trong [`database/procedures/`](file:///c:/Users/tiger/Documents/QLVT/database/procedures/).
+6. **Nạp dữ liệu mẫu kiểm thử (Seed Data):** Chạy [`database/seed/seed_data.sql`](file:///c:/Users/tiger/Documents/QLVT/database/seed/seed_data.sql) *(được nạp TRƯỚC Triggers để tránh trigger tự động tính toán làm lệch số lượng tồn kho ban đầu)*.
+7. **Quét & nạp toàn bộ Triggers:** Tự động nạp tất cả file `.sql` trong [`database/triggers/`](file:///c:/Users/tiger/Documents/QLVT/database/triggers/) *(gắn vào sau khi số liệu seed đã nằm an toàn trong bảng)*.
+8. **Tạo tài khoản SQL Server Logins kiểm thử:**
+   * 👤 **Quản trị viên (Admin):** Username = `NV_1` | Mật khẩu = `123456`
+   * 👤 **Nhân viên (Nhanvien):** Username = `NV_2` | Mật khẩu = `123456`
+
+⚠️ *Lưu ý: Lệnh này sẽ `DROP` các bảng cũ nếu tồn tại, chỉ chạy khi khởi tạo lần đầu hoặc muốn làm mới toàn bộ dữ liệu.*
+
+---
+
+### ⚪ Trường hợp C: Chạy thủ công trên SQL Server Management Studio (SSMS)
 1. Mở **SQL Server Management Studio (SSMS)** và kết nối tới SQL Server instance của bạn.
 2. Mở file [`database/init_database.sql`](file:///c:/Users/tiger/Documents/QLVT/database/init_database.sql) $\rightarrow$ Bấm **Execute (F5)** để tạo CSDL và 8 bảng.
-3. Chạy lần lượt các file Stored Procedure trong thư mục [`database/procedures/`](file:///c:/Users/tiger/Documents/QLVT/database/procedures/).
-4. Mở file [`database/seed/seed_data.sql`](file:///c:/Users/tiger/Documents/QLVT/database/seed/seed_data.sql) $\rightarrow$ Bấm **Execute (F5)** để nạp dữ liệu mẫu.
+3. Chạy lần lượt các file trong thư mục [`database/functions/`](file:///c:/Users/tiger/Documents/QLVT/database/functions/) (nếu có).
+4. Chạy lần lượt các file Stored Procedure trong thư mục [`database/procedures/`](file:///c:/Users/tiger/Documents/QLVT/database/procedures/).
+5. Mở file [`database/seed/seed_data.sql`](file:///c:/Users/tiger/Documents/QLVT/database/seed/seed_data.sql) $\rightarrow$ Bấm **Execute (F5)** để nạp dữ liệu mẫu.
+6. Chạy lần lượt các file trong thư mục [`database/triggers/`](file:///c:/Users/tiger/Documents/QLVT/database/triggers/) (nếu có, nạp sau Seed data).
 
 ---
 
