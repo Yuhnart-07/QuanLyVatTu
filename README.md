@@ -97,11 +97,50 @@ npm run db:setup
 
 #### ⚠️ Lưu ý quan trọng khi chạy `db:setup`:
 * ⛔ **XÓA SẠCH DỮ LIỆU CŨ:** Lệnh này sẽ `DROP` lại các bảng cũ và nạp lại seed data mặc định. Nếu bạn đang có dữ liệu test quan trọng tự nhập trên máy, dữ liệu đó **sẽ bị mất**.
-* Nếu bạn **chỉ muốn giữ nguyên dữ liệu hiện tại và bổ sung thêm nhân viên**, đừng chạy `db:setup`, hãy mở SSMS chạy các dòng `INSERT` nhân viên mới trong file `database/seed/seed_data.sql` (bỏ qua đoạn `DELETE`).
 
 ---
 
-### ⚪ 2.4. Cách chạy thủ công qua SQL Server Management Studio (SSMS)
+### 🔵 2.4. Hướng dẫn sử dụng `seed_data.sql` khi ĐÃ CÓ CSDL
+
+Khi máy của bạn **đã có database** và đang chứa dữ liệu, tùy theo nhu cầu, bạn có 2 lựa chọn để sử dụng dữ liệu từ [`database/seed/seed_data.sql`](database/seed/seed_data.sql):
+
+#### 🔹 Lựa chọn 1: Muốn làm mới hoàn toàn (Xóa trắng dữ liệu cũ và nạp lại từ đầu)
+Nếu bạn không cần giữ lại các dữ liệu test cũ và muốn đưa toàn bộ CSDL về trạng thái chuẩn với đầy đủ 55 nhân viên cùng dữ liệu của 7 bảng còn lại:
+* **Cách thực hiện:** Chạy lệnh setup:
+  ```bash
+  npm run db:setup
+  ```
+* ⚠️ **Lưu ý:** Lệnh này sẽ xóa toàn bộ dữ liệu tự nhập trước đó trên máy của bạn và nạp lại 55 nhân viên mẫu cùng 2 tài khoản login chuẩn (`NV_1`, `NV_2` / `123456`).
+
+#### 🔹 Lựa chọn 2: Muốn BẢO TOÀN dữ liệu hiện tại, CHỈ nạp thêm các dữ liệu còn thiếu
+Nếu bạn đã tự tạo sẵn một số nhân viên, phiếu nhập/xuất hoặc login riêng và **không muốn bị mất dữ liệu**:
+* **Tuyệt đối KHÔNG chạy toàn bộ file `seed_data.sql`** vì ở dòng 17-25 có sẵn các câu lệnh `DELETE FROM dbo.CTPX; ... DELETE FROM dbo.Nhanvien;` sẽ xóa sạch dữ liệu của bạn.
+* **Cách thực hiện qua SQL Server Management Studio (SSMS):**
+  1. Mở SSMS, kết nối tới CSDL `QLVT`.
+  2. Mở file [`database/seed/seed_data.sql`](database/seed/seed_data.sql).
+  3. **Bôi đen chỉ những dòng `INSERT` dữ liệu mới** mà bạn cần (Ví dụ: bôi đen các dòng từ nhân viên số 6 đến nhân viên 55, bỏ qua nhân viên 1 đến 5 bạn đã có).
+  4. Nhấn **F5 (Execute)** để nạp bổ sung.
+* **Hoặc chạy đoạn script nạp an toàn (Chỉ nạp nếu chưa có Mã NV):**
+  ```sql
+  USE QLVT;
+  GO
+  -- Bổ sung nhân viên mẫu nếu chưa tồn tại mã nhân viên tương ứng
+  INSERT INTO dbo.Nhanvien (MANV, HO, TEN, DIACHI, NGAYSINH, LUONG, GHICHU)
+  SELECT s.MANV, s.HO, s.TEN, s.DIACHI, s.NGAYSINH, s.LUONG, s.GHICHU
+  FROM (
+      VALUES 
+      (6, N'Đặng Quốc', N'Bảo', N'12 Pasteur, Q.1, TP.HCM', '1991-04-12', 8200000, N'Nhân viên kiểm kê hàng hóa'),
+      (7, N'Vũ Thị', N'Cẩm', N'88 Hoàng Hoa Thám, Q.Bình Thạnh, TP.HCM', '1994-11-05', 7300000, N'Kế toán kho vật tư')
+      -- (Thêm các nhân viên khác bạn muốn bổ sung)
+  ) AS s(MANV, HO, TEN, DIACHI, NGAYSINH, LUONG, GHICHU)
+  WHERE NOT EXISTS (SELECT 1 FROM dbo.Nhanvien nv WHERE nv.MANV = s.MANV);
+  GO
+  ```
+* ⚠️ **Lưu ý:** Cách này bảo toàn 100% dữ liệu bạn đã nhập, không gây lỗi trùng khóa chính (`PRIMARY KEY`) và không làm ảnh hưởng tới các khóa ngoại liên quan.
+
+---
+
+### ⚪ 2.5. Cách chạy thủ công qua SQL Server Management Studio (SSMS)
 
 Nếu không dùng terminal Node.js, bạn có thể chạy tuần tự từng file bằng SSMS:
 1. Mở file [`database/init_database.sql`](database/init_database.sql) $\rightarrow$ Nhấn **Execute (F5)** để tạo CSDL và 8 bảng.
