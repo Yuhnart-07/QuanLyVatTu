@@ -41,52 +41,60 @@ BEGIN
         THROW 50001, N'Mật khẩu không chính xác.', 1;
 
     -- -------------------------------------------------------
-    -- 3. Trích xuất MANV từ tên Login theo quy ước NV_{MANV}
-    --    Ví dụ: NV_1 → MANV = 1, NV_25 → MANV = 25
+    -- 3. Tìm Database User tương ứng với Login trong CSDL QLVT (RULE 04)
     -- -------------------------------------------------------
-    DECLARE @MANV_STR NVARCHAR(50);
-    DECLARE @MANV INT;
+    DECLARE @DbUserName NVARCHAR(128);
 
-    SET @MANV_STR = REPLACE(@Username, 'NV_', '');
+    SELECT @DbUserName = dp.name
+    FROM sys.database_principals dp
+    INNER JOIN sys.server_principals sp ON dp.sid = sp.sid
+    WHERE sp.name = @Username;
 
-    IF ISNUMERIC(@MANV_STR) = 1
-        SET @MANV = CAST(@MANV_STR AS INT);
+    IF @DbUserName IS NULL
+    BEGIN
+        THROW 50001, N'Tài khoản chưa được phân quyền truy cập vào cơ sở dữ liệu QLVT!', 1;
+    END
+
+    -- -------------------------------------------------------
+    -- 4. Bóc tách MANV từ Database User Name (hỗ trợ USER_{MANV}, NV_{MANV}, hoặc số thuần)
+    -- -------------------------------------------------------
+    DECLARE @MANV INT = NULL;
+
+    IF @DbUserName LIKE 'USER[_]%'
+        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 6, LEN(@DbUserName)) AS INT);
+    ELSE IF @DbUserName LIKE 'NV[_]%'
+        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 4, LEN(@DbUserName)) AS INT);
     ELSE
-        THROW 50001, N'Tài khoản không đúng quy ước đặt tên (NV_{MaNV}).', 1;
+        SET @MANV = TRY_CAST(@DbUserName AS INT);
+
+    IF @MANV IS NULL
+    BEGIN
+        THROW 50001, N'Không thể xác định mã nhân viên từ định danh bảo mật!', 1;
+    END
 
     -- Kiểm tra MANV có tồn tại trong bảng Nhanvien
     IF NOT EXISTS (SELECT 1 FROM dbo.Nhanvien WHERE MANV = @MANV)
         THROW 50001, N'Không tìm thấy nhân viên tương ứng với tài khoản này.', 1;
 
     -- -------------------------------------------------------
-    -- 4. Xác định Role qua sys.database_role_members
+    -- 5. Xác định Role qua sys.database_role_members
     --    Ưu tiên: Admin > Nhanvien
     -- -------------------------------------------------------
     DECLARE @Role NVARCHAR(20) = N'Nhanvien'; -- Mặc định là Nhân viên
 
-    -- Tìm Database User tương ứng với Login
-    DECLARE @DbUserName NVARCHAR(128);
-    SELECT @DbUserName = dp.name
-    FROM sys.database_principals dp
-    INNER JOIN sys.server_principals sp ON dp.sid = sp.sid
-    WHERE sp.name = @Username;
-
-    IF @DbUserName IS NOT NULL
-    BEGIN
-        -- Kiểm tra xem user có thuộc role 'Admin' không
-        IF EXISTS (
-            SELECT 1
-            FROM sys.database_role_members drm
-            INNER JOIN sys.database_principals role_dp ON drm.role_principal_id = role_dp.principal_id
-            INNER JOIN sys.database_principals member_dp ON drm.member_principal_id = member_dp.principal_id
-            WHERE member_dp.name = @DbUserName
-              AND role_dp.name = N'Admin'
-        )
-            SET @Role = N'Admin';
-    END
+    -- Kiểm tra xem user có thuộc role 'Admin' không
+    IF EXISTS (
+        SELECT 1
+        FROM sys.database_role_members drm
+        INNER JOIN sys.database_principals role_dp ON drm.role_principal_id = role_dp.principal_id
+        INNER JOIN sys.database_principals member_dp ON drm.member_principal_id = member_dp.principal_id
+        WHERE member_dp.name = @DbUserName
+          AND role_dp.name = N'Admin'
+    )
+        SET @Role = N'Admin';
 
     -- -------------------------------------------------------
-    -- 5. Trả về thông tin người dùng cho Node.js lưu vào session
+    -- 6. Trả về thông tin người dùng cho Node.js lưu vào session
     -- -------------------------------------------------------
     SELECT 
         nv.MANV        AS manv,

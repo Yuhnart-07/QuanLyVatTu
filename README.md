@@ -13,65 +13,102 @@ Dự án phát triển ứng dụng quản lý vật tư theo mô hình phân t�
 
 ---
 
-## 2. HƯỚNG DẪN KHỞI TẠO & CẬP NHẬT CƠ SỞ DỮ LIỆU
+## 2. HƯỚNG DẪN KHỞI TẠO, CẬP NHẬT & DỮ LIỆU MẪU CSDL
 
 Đảm bảo bạn đã cấu hình đúng thông tin kết nối SQL Server trong file `.env` trước khi thực thi.
 
 ---
 
-### 🟢 Trường hợp A: Cập nhật CSDL khi đang làm việc (KHUYÊN DÙNG HẰNG NGÀY - BẢO TOÀN DỮ LIỆU)
+### 📦 2.1. Dữ liệu mẫu (Seed Data) trong hệ thống gồm những gì?
 
-> **Dành cho:** Thành viên **đã có CSDL** và đang nhập liệu/kiểm thử. Khi bạn vừa `git pull` code mới về và thấy có Stored Procedure mới hoặc được cập nhật:
+File dữ liệu mẫu nằm tại [`database/seed/seed_data.sql`](database/seed/seed_data.sql), bao gồm dữ liệu nghiệp vụ chuẩn hóa cho cả **8 bảng**:
 
-Chạy đúng 1 lệnh duy nhất:
+1. **`Nhanvien` (55 nhân viên):**
+   - Mã nhân viên từ `1` đến `55`.
+   - Đầy đủ thông tin: Họ, Tên, Ngày sinh, Địa chỉ (TP.HCM, Hà Nội, Đà Nẵng, Hải Phòng, Cần Thơ...), Lương cơ bản, Ghi chú chức vụ nghiệp vụ.
+   - Phục vụ kiểm thử phân trang (10, 20, 50 dòng/trang) và tìm kiếm tiếng Việt.
+2. **`Vattu` (6 vật tư xây dựng):**
+   - `VT01`: Xi măng Hà Tiên (150 Bao)
+   - `VT02`: Sắt phi 10 (800 Kg)
+   - `VT03`: Gạch ống 4 lỗ (3.500 Viên)
+   - `VT04`: Cát vàng xây dựng (60 M3)
+   - `VT05`: Đá xanh 1x2 (45 M3)
+   - `VT06`: Sơn Dulux nội thất (90 Thùng)
+3. **`DatHang` (3 đơn đặt hàng):**
+   - `DDH00001`, `DDH00002`, `DDH00003` liên kết với các nhà cung cấp và nhân viên phụ trách thu mua.
+4. **`CTDDH` (6 dòng chi tiết đặt hàng):**
+   - Chi tiết danh mục vật tư, số lượng đặt và đơn giá cho từng đơn hàng.
+5. **`PhieuNhap` (3 phiếu nhập kho):**
+   - `PN000001`, `PN000002`, `PN000003` tương ứng với các đơn đặt hàng đã lập.
+6. **`CTPN` (6 dòng chi tiết nhập kho):**
+   - Đảm bảo đúng chuẩn nghiệp vụ: số lượng nhập không vượt quá số lượng đặt trên đơn hàng.
+7. **`PhieuXuat` (2 phiếu xuất kho):**
+   - `PX000001`, `PX000002` xuất hàng cho các khách hàng/nhà thầu.
+8. **`CTPX` (4 dòng chi tiết xuất kho):**
+   - Đảm bảo đúng chuẩn nghiệp vụ: số lượng xuất không vượt quá số lượng tồn kho.
+
+---
+
+### 🟢 2.2. Khi đã có CSDL: Cách chạy Cập nhật (`npm run db:update`)
+
+> **Dành cho:** Máy **ĐÃ CÓ CSDL** và đang làm việc/test dữ liệu. Thường dùng hằng ngày khi vừa `git pull` code mới về từ repository có sửa đổi hoặc thêm mới Stored Procedures, Functions, Triggers.
+
+#### Cách chạy:
+Chạy đúng 1 lệnh duy nhất tại thư mục gốc dự án:
 ```bash
 npm run db:update
 ```
 
-**Cơ chế hoạt động:**
-* Tự động quét và đồng bộ **3 thành phần logic CSDL** từ source code:
-  * 📂 `database/functions/`: Tự động nạp các Hàm người dùng mới hoặc làm mới khi sửa đổi.
-  * 📂 `database/procedures/`: Tự động nạp các Stored Procedures mới hoặc làm mới phiên bản mới nhất.
-  * 📂 `database/triggers/`: Tự động nạp các Triggers (bộ kích hoạt) mới hoặc làm mới.
-* Tự động kiểm tra và bổ sung Roles (`Admin`, `Nhanvien`), quyền hạn (`GRANT EXECUTE`) và Logins kiểm thử nếu còn thiếu (`IF NOT EXISTS`).
-* 🛡️ **CAM KẾT AN TOÀN:**
-  * **BỎ QUA** thư mục `database/tables/` và `database/seed/`.
-  * **Tuyệt đối KHÔNG xóa bảng (`DROP TABLE`), KHÔNG sửa bảng, KHÔNG xóa dữ liệu (`DELETE`). Toàn bộ 8 bảng và dữ liệu bạn đang làm việc được bảo toàn 100% nguyên vẹn.**
+#### Cơ chế hoạt động:
+* Tự động quét và đồng bộ các thành phần logic:
+  * 📂 `database/functions/`: Tự động nạp hoặc làm mới Functions.
+  * 📂 `database/procedures/`: Tự động nạp hoặc làm mới tất cả Stored Procedures.
+  * 📂 `database/triggers/`: Tự động nạp hoặc làm mới Triggers.
+* Tự động kiểm tra và bổ sung Roles (`Admin`, `Nhanvien`), phân quyền `EXECUTE` và Logins kiểm thử (`NV_1`, `NV_2`) nếu chưa có (`IF NOT EXISTS`).
+
+#### ⚠️ Lưu ý quan trọng khi chạy `db:update`:
+* 🛡️ **Bảo toàn dữ liệu 100%:** Lệnh này **TUYỆT ĐỐI BỎ QUA** thư mục `database/tables/` và `database/seed/`.
+* **KHÔNG** xóa bảng (`DROP TABLE`), **KHÔNG** sửa bảng, **KHÔNG** xóa dữ liệu (`DELETE`). Toàn bộ nhân viên, vật tư, đơn hàng, phiếu nhập/xuất bạn tự nhập tay trước đó trên máy sẽ được giữ nguyên vẹn.
+* Lệnh này **KHÔNG** tự động nạp thêm dữ liệu mẫu từ `seed_data.sql`.
 
 ---
 
-### 🟡 Trường hợp B: Khởi tạo lần đầu hoặc Reset trắng dữ liệu về mặc định
+### 🟡 2.3. Khi chưa có CSDL hoặc muốn Reset: Cách chạy Setup (`npm run db:setup`)
 
-> **Dành cho:** Thành viên **vừa clone dự án lần đầu tiên**, chưa có database trong SQL Server, HOẶC muốn xóa sạch sẽ dữ liệu cũ để nạp lại dữ liệu mẫu chuẩn (Seed data):
+> **Dành cho:** Máy **CHƯA CÓ DATABASE** (mới clone dự án lần đầu), HOẶC khi bạn muốn xóa sạch dữ liệu cũ để đưa toàn bộ hệ thống về trạng thái ban đầu với đầy đủ dữ liệu mẫu chuẩn.
 
-Chạy lệnh:
+#### Cách chạy:
+Chạy đúng 1 lệnh duy nhất:
 ```bash
 npm run db:setup
 ```
 
-**Lệnh trên sẽ tự động thực thi chuỗi 8 bước hoàn chỉnh:**
-1. **Kiểm tra & tạo CSDL `QLVT`:** Kết nối `master`, tạo database nếu chưa có.
-2. **Khởi tạo 8 bảng dữ liệu:** Chạy file [`database/init_database.sql`](file:///c:/Users/tiger/Documents/QLVT/database/init_database.sql).
-3. **Thiết lập Database Roles & Phân quyền:** Tạo role `Admin` (`db_owner`) và `Nhanvien` (cấp quyền `EXECUTE` cho SP/Scalar Function và `SELECT, INSERT, UPDATE, DELETE` cho bảng/Table-Valued Function).
-4. **Quét & nạp toàn bộ Functions:** Tự động nạp tất cả file `.sql` trong [`database/functions/`](file:///c:/Users/tiger/Documents/QLVT/database/functions/).
-5. **Quét & nạp toàn bộ Stored Procedures:** Tự động nạp tất cả file `.sql` trong [`database/procedures/`](file:///c:/Users/tiger/Documents/QLVT/database/procedures/).
-6. **Nạp dữ liệu mẫu kiểm thử (Seed Data):** Chạy [`database/seed/seed_data.sql`](file:///c:/Users/tiger/Documents/QLVT/database/seed/seed_data.sql) *(được nạp TRƯỚC Triggers để tránh trigger tự động tính toán làm lệch số lượng tồn kho ban đầu)*.
-7. **Quét & nạp toàn bộ Triggers:** Tự động nạp tất cả file `.sql` trong [`database/triggers/`](file:///c:/Users/tiger/Documents/QLVT/database/triggers/) *(gắn vào sau khi số liệu seed đã nằm an toàn trong bảng)*.
-8. **Tạo tài khoản SQL Server Logins kiểm thử:**
-   * 👤 **Quản trị viên (Admin):** Username = `NV_1` | Mật khẩu = `123456`
-   * 👤 **Nhân viên (Nhanvien):** Username = `NV_2` | Mật khẩu = `123456`
+#### Quy trình 8 bước tự động:
+1. Kết nối SQL Server qua tài khoản `sa` / tài khoản cấu hình trong `.env`, tạo database `QLVT` nếu chưa có.
+2. Xóa các bảng cũ (nếu có) và tạo mới toàn bộ 8 bảng dữ liệu ([`database/init_database.sql`](database/init_database.sql)).
+3. Cấu hình Database Roles: `Admin` (quyền quản trị cao nhất) và `Nhanvien` (quyền hạn mức nghiệp vụ).
+4. Tự động nạp toàn bộ Functions trong `database/functions/`.
+5. Tự động nạp toàn bộ Stored Procedures trong `database/procedures/`.
+6. **Tự động chạy `database/seed/seed_data.sql`:** Nạp đủ 55 nhân viên mẫu và dữ liệu mẫu của 7 bảng còn lại. *(Được nạp TRƯỚC Triggers để tránh trigger tự động tính toán làm lệch số lượng tồn kho ban đầu)*.
+7. Tự động nạp toàn bộ Triggers trong `database/triggers/`.
+8. Tự động tạo 2 tài khoản SQL Server Logins kiểm thử:
+   * 👤 **Admin:** Username = `NV_1` | Password = `123456`
+   * 👤 **Nhân viên:** Username = `NV_2` | Password = `123456`
 
-⚠️ *Lưu ý: Lệnh này sẽ `DROP` các bảng cũ nếu tồn tại, chỉ chạy khi khởi tạo lần đầu hoặc muốn làm mới toàn bộ dữ liệu.*
+#### ⚠️ Lưu ý quan trọng khi chạy `db:setup`:
+* ⛔ **XÓA SẠCH DỮ LIỆU CŨ:** Lệnh này sẽ `DROP` lại các bảng cũ và nạp lại seed data mặc định. Nếu bạn đang có dữ liệu test quan trọng tự nhập trên máy, dữ liệu đó **sẽ bị mất**.
+* Nếu bạn **chỉ muốn giữ nguyên dữ liệu hiện tại và bổ sung thêm nhân viên**, đừng chạy `db:setup`, hãy mở SSMS chạy các dòng `INSERT` nhân viên mới trong file `database/seed/seed_data.sql` (bỏ qua đoạn `DELETE`).
 
 ---
 
-### ⚪ Trường hợp C: Chạy thủ công trên SQL Server Management Studio (SSMS)
-1. Mở **SQL Server Management Studio (SSMS)** và kết nối tới SQL Server instance của bạn.
-2. Mở file [`database/init_database.sql`](file:///c:/Users/tiger/Documents/QLVT/database/init_database.sql) $\rightarrow$ Bấm **Execute (F5)** để tạo CSDL và 8 bảng.
-3. Chạy lần lượt các file trong thư mục [`database/functions/`](file:///c:/Users/tiger/Documents/QLVT/database/functions/) (nếu có).
-4. Chạy lần lượt các file Stored Procedure trong thư mục [`database/procedures/`](file:///c:/Users/tiger/Documents/QLVT/database/procedures/).
-5. Mở file [`database/seed/seed_data.sql`](file:///c:/Users/tiger/Documents/QLVT/database/seed/seed_data.sql) $\rightarrow$ Bấm **Execute (F5)** để nạp dữ liệu mẫu.
-6. Chạy lần lượt các file trong thư mục [`database/triggers/`](file:///c:/Users/tiger/Documents/QLVT/database/triggers/) (nếu có, nạp sau Seed data).
+### ⚪ 2.4. Cách chạy thủ công qua SQL Server Management Studio (SSMS)
+
+Nếu không dùng terminal Node.js, bạn có thể chạy tuần tự từng file bằng SSMS:
+1. Mở file [`database/init_database.sql`](database/init_database.sql) $\rightarrow$ Nhấn **Execute (F5)** để tạo CSDL và 8 bảng.
+2. Chạy lần lượt các file trong [`database/functions/`](database/functions/) (nếu có).
+3. Chạy lần lượt các file trong [`database/procedures/`](database/procedures/).
+4. Mở file [`database/seed/seed_data.sql`](database/seed/seed_data.sql) $\rightarrow$ Nhấn **Execute (F5)** để nạp dữ liệu mẫu.
+5. Chạy lần lượt các file trong [`database/triggers/`](database/triggers/) (lưu ý: triggers phải nạp SAU seed data để không kích hoạt cập nhật tồn kho lệch số liệu ban đầu).
 
 ---
 

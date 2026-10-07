@@ -7,11 +7,14 @@
  * ====================================================================================
  */
 
-// Biến lưu danh sách nhân viên hiện tại trên giao diện
+// Biến lưu danh sách nhân viên và trạng thái phân trang trên giao diện
 let currentEmployees = [];
+let filteredEmployees = [];
+let currentPage = 1;
+let pageSize = 10;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Khởi tạo dữ liệu từ bảng ban đầu
+  // 1. Khởi tạo dữ liệu từ bảng ban đầu do server render
   initEmployeeDataFromDOM();
 
   // 2. Gắn sự kiện tìm kiếm thời gian thực
@@ -20,10 +23,20 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', handleEmployeeSearch);
   }
 
-  // 3. Cập nhật thống kê ban đầu
+  // 3. Đọc pageSize từ select nếu có
+  const pageSizeSelect = document.getElementById('pageSizeSelect');
+  if (pageSizeSelect) {
+    pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+  }
+
+  // 4. Áp dụng phân trang ngay từ trang 1
+  currentPage = 1;
+  renderPaginatedTable();
+
+  // 5. Cập nhật các thẻ thống kê tổng quan (dựa trên toàn bộ nhân viên)
   updateStatistics(currentEmployees);
 
-  // 4. Kiểm tra trạng thái nút Undo khi nạp trang
+  // 6. Kiểm tra trạng thái nút Undo khi nạp trang
   checkUndoState();
 });
 
@@ -31,19 +44,25 @@ document.addEventListener('DOMContentLoaded', () => {
  * Trích xuất dữ liệu từ các dòng HTML table khi server render lần đầu
  */
 function initEmployeeDataFromDOM() {
-  const rows = document.querySelectorAll('#employeeTableBody tr[data-manv]');
-  currentEmployees = [];
-  rows.forEach(row => {
-    currentEmployees.push({
-      MANV: parseInt(row.getAttribute('data-manv'), 10),
-      HO: row.getAttribute('data-ho') || '',
-      TEN: row.getAttribute('data-ten') || '',
-      DIACHI: row.getAttribute('data-diachi') || '',
-      NGAYSINH: row.getAttribute('data-ngaysinh') || '',
-      LUONG: parseFloat(row.getAttribute('data-luong')) || 0,
-      GHICHU: row.getAttribute('data-ghichu') || ''
+  if (Array.isArray(window.INITIAL_EMPLOYEES) && window.INITIAL_EMPLOYEES.length > 0) {
+    currentEmployees = [...window.INITIAL_EMPLOYEES];
+  } else {
+    const rows = document.querySelectorAll('#employeeTableBody tr[data-manv]');
+    currentEmployees = [];
+    rows.forEach(row => {
+      currentEmployees.push({
+        MANV: parseInt(row.getAttribute('data-manv'), 10),
+        HO: row.getAttribute('data-ho') || '',
+        TEN: row.getAttribute('data-ten') || '',
+        DIACHI: row.getAttribute('data-diachi') || '',
+        NGAYSINH: row.getAttribute('data-ngaysinh') || '',
+        LUONG: parseFloat(row.getAttribute('data-luong')) || 0,
+        GHICHU: row.getAttribute('data-ghichu') || ''
+      });
     });
-  });
+  }
+
+  filteredEmployees = [...currentEmployees];
 }
 
 /**
@@ -53,8 +72,6 @@ function updateStatistics(list) {
   const totalCountEl = document.getElementById('statTotalEmployees');
   const totalSalaryEl = document.getElementById('statTotalSalary');
   const avgSalaryEl = document.getElementById('statAvgSalary');
-  const totalRecordsText = document.getElementById('totalRecordsText');
-  const pageRangeText = document.getElementById('pageRangeText');
 
   const count = list.length;
   const totalSalary = list.reduce((sum, item) => sum + (Number(item.LUONG) || 0), 0);
@@ -63,36 +80,65 @@ function updateStatistics(list) {
   if (totalCountEl) totalCountEl.innerText = count.toString();
   if (totalSalaryEl) totalSalaryEl.innerText = formatCurrency(totalSalary) + ' đ';
   if (avgSalaryEl) avgSalaryEl.innerText = formatCurrency(avgSalary) + ' đ';
-  if (totalRecordsText) totalRecordsText.innerText = count.toString();
-  if (pageRangeText) pageRangeText.innerText = count > 0 ? `1 - ${count}` : '0 - 0';
 }
 
 /**
- * Vẽ lại toàn bộ bảng danh sách nhân viên trên giao diện
+ * Vẽ lại bảng danh sách nhân viên theo phân trang hiện tại
  */
-function renderEmployeeTable(employees) {
+function renderPaginatedTable() {
   const tbody = document.getElementById('employeeTableBody');
   if (!tbody) return;
 
-  if (!employees || employees.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" class="px-4 py-12 text-center text-slate-400">
-          <div class="flex flex-col items-center justify-center">
-            <i class="fa-solid fa-users-slash text-4xl mb-3 text-slate-300"></i>
-            <span class="text-sm font-medium">Chưa có dữ liệu nhân viên nào trong hệ thống.</span>
-          </div>
-        </td>
-      </tr>
-    `;
-    updateStatistics([]);
+  const total = filteredEmployees.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  // Đảm bảo currentPage nằm trong khoảng hợp lệ
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  // Trường hợp không có dữ liệu
+  if (total === 0) {
+    const searchInput = document.getElementById('employeeSearch');
+    const query = (searchInput?.value || '').trim();
+
+    if (query) {
+      tbody.innerHTML = `
+        <tr id="employeeEmptySearchRow">
+          <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+            <div class="flex flex-col items-center justify-center">
+              <i class="fa-solid fa-magnifying-glass text-4xl mb-3 text-slate-300"></i>
+              <span class="text-sm font-medium">Không tìm thấy nhân viên nào phù hợp với từ khóa "${escapeHtml(query)}".</span>
+              <span class="text-xs text-slate-400 mt-1">Gợi ý: Thử tìm kiếm không dấu, kiểm tra lỗi chính tả hoặc tìm theo Mã NV.</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    } else {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+            <div class="flex flex-col items-center justify-center">
+              <i class="fa-solid fa-users-slash text-4xl mb-3 text-slate-300"></i>
+              <span class="text-sm font-medium">Chưa có dữ liệu nhân viên nào trong hệ thống.</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    updatePaginationControls(0, 1, 0, 0);
     return;
   }
 
-  tbody.innerHTML = employees.map(emp => {
+  // Cắt mảng dữ liệu tương ứng với trang hiện tại
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageItems = filteredEmployees.slice(startIndex, endIndex);
+
+  tbody.innerHTML = pageItems.map(emp => {
     const formattedSalary = formatCurrency(emp.LUONG);
     const formattedDate = formatDate(emp.NGAYSINH);
-    const fullName = `${emp.HO} ${emp.TEN}`.trim();
+    const fullName = `${emp.HO || ''} ${emp.TEN || ''}`.trim();
     const initials = (emp.TEN ? emp.TEN[0] : 'NV').toUpperCase();
 
     return `
@@ -118,7 +164,6 @@ function renderEmployeeTable(employees) {
             </div>
             <div>
               <div class="font-semibold text-slate-900">${escapeHtml(fullName)}</div>
-              <div class="text-[11px] text-slate-400 font-mono">NV_${emp.MANV}</div>
             </div>
           </div>
         </td>
@@ -158,36 +203,180 @@ function renderEmployeeTable(employees) {
     `;
   }).join('');
 
-  updateStatistics(employees);
+  updatePaginationControls(total, totalPages, startIndex + 1, endIndex);
 }
 
 /**
- * Xử lý tìm kiếm trực tiếp trên DOM
+ * Cập nhật thanh điều khiển phân trang dưới chân bảng
+ */
+function updatePaginationControls(total, totalPages, start, end) {
+  const pageRangeText = document.getElementById('pageRangeText');
+  const totalRecordsText = document.getElementById('totalRecordsText');
+  const btnPrev = document.getElementById('btnPrevPage');
+  const btnNext = document.getElementById('btnNextPage');
+  const pageContainer = document.getElementById('pageNumbersContainer');
+
+  if (pageRangeText) {
+    pageRangeText.innerText = total > 0 ? `${start} - ${end}` : '0 - 0';
+  }
+  if (totalRecordsText) {
+    totalRecordsText.innerText = total.toString();
+  }
+  if (btnPrev) {
+    btnPrev.disabled = (currentPage <= 1);
+  }
+  if (btnNext) {
+    btnNext.disabled = (currentPage >= totalPages || total === 0);
+  }
+
+  // Render danh sách nút số trang tròn xanh Sapo
+  if (pageContainer) {
+    if (total === 0) {
+      pageContainer.innerHTML = '';
+      return;
+    }
+
+    const pages = getPaginationPageList(currentPage, totalPages);
+    pageContainer.innerHTML = pages.map(p => {
+      if (p === '...') {
+        return `<span class="px-1 text-slate-400 font-mono">...</span>`;
+      }
+      const isActive = (p === currentPage);
+      if (isActive) {
+        return `
+          <button type="button" 
+            class="w-7 h-7 flex items-center justify-center rounded-lg bg-[#0088ff] text-white font-semibold text-xs shadow-sm"
+            title="Trang ${p}">
+            ${p}
+          </button>
+        `;
+      }
+      return `
+        <button type="button" onclick="goToPage(${p})"
+          class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-xs transition"
+          title="Đến trang ${p}">
+          ${p}
+        </button>
+      `;
+    }).join('');
+  }
+}
+
+/**
+ * Sinh danh sách số trang rút gọn thông minh
+ */
+function getPaginationPageList(current, total) {
+  if (total <= 7) {
+    const list = [];
+    for (let i = 1; i <= total; i++) list.push(i);
+    return list;
+  }
+
+  const list = [1];
+  if (current > 3) list.push('...');
+
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  for (let i = start; i <= end; i++) {
+    list.push(i);
+  }
+
+  if (current < total - 2) list.push('...');
+  list.push(total);
+
+  return list;
+}
+
+/**
+ * Thay đổi số bản ghi hiển thị trên mỗi trang (10, 20, 50, 100)
+ */
+function changePageSize(newSize) {
+  const size = parseInt(newSize, 10);
+  if (!isNaN(size) && size > 0) {
+    pageSize = size;
+    currentPage = 1;
+    renderPaginatedTable();
+  }
+}
+
+/**
+ * Chuyển tới một trang cụ thể
+ */
+function goToPage(page) {
+  const p = parseInt(page, 10);
+  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+  if (!isNaN(p) && p >= 1 && p <= totalPages) {
+    currentPage = p;
+    renderPaginatedTable();
+  }
+}
+
+/**
+ * Lùi về trang trước
+ */
+function goToPrevPage() {
+  if (currentPage > 1) {
+    goToPage(currentPage - 1);
+  }
+}
+
+/**
+ * Tiến tới trang sau
+ */
+function goToNextPage() {
+  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+  if (currentPage < totalPages) {
+    goToPage(currentPage + 1);
+  }
+}
+
+/**
+ * Vẽ lại toàn bộ bảng danh sách nhân viên (hỗ trợ gọi từ bên ngoài)
+ */
+function renderEmployeeTable(employees) {
+  currentEmployees = employees || [];
+  filteredEmployees = [...currentEmployees];
+  currentPage = 1;
+  renderPaginatedTable();
+  updateStatistics(currentEmployees);
+}
+
+/**
+ * Xử lý tìm kiếm thời gian thực thông minh trên giao diện kết hợp Phân trang
  */
 function handleEmployeeSearch(e) {
-  const query = e.target.value.toLowerCase().trim();
-  const rows = document.querySelectorAll('#employeeTableBody tr[data-manv]');
+  const query = (e.target.value || '').trim();
+  const matcher = (typeof window.matchSearchTerms === 'function') 
+    ? window.matchSearchTerms 
+    : (typeof matchSearchTerms === 'function' ? matchSearchTerms : null);
 
-  let visibleCount = 0;
-  rows.forEach(row => {
-    const manv = (row.getAttribute('data-manv') || '').toLowerCase();
-    const ho = (row.getAttribute('data-ho') || '').toLowerCase();
-    const ten = (row.getAttribute('data-ten') || '').toLowerCase();
-    const diachi = (row.getAttribute('data-diachi') || '').toLowerCase();
-    const fullName = `${ho} ${ten}`.trim();
+  if (!query) {
+    filteredEmployees = [...currentEmployees];
+  } else {
+    filteredEmployees = currentEmployees.filter(emp => {
+      const manv = (emp.MANV !== null && emp.MANV !== undefined) ? String(emp.MANV) : '';
+      const ho = emp.HO || '';
+      const ten = emp.TEN || '';
+      const fullName = `${ho} ${ten}`.trim();
+      const diachi = emp.DIACHI || '';
+      const ghichu = emp.GHICHU || '';
 
-    if (manv.includes(query) || ho.includes(query) || ten.includes(query) || fullName.includes(query) || diachi.includes(query)) {
-      row.style.display = '';
-      visibleCount++;
-    } else {
-      row.style.display = 'none';
-    }
-  });
+      const searchFields = [manv, ho, ten, fullName, diachi, ghichu].filter(item => {
+        if (item === null || item === undefined) return false;
+        const s = String(item).trim();
+        return s.length > 0 && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined';
+      });
 
-  const totalRecordsText = document.getElementById('totalRecordsText');
-  const pageRangeText = document.getElementById('pageRangeText');
-  if (totalRecordsText) totalRecordsText.innerText = visibleCount.toString();
-  if (pageRangeText) pageRangeText.innerText = visibleCount > 0 ? `1 - ${visibleCount}` : '0 - 0';
+      if (matcher) {
+        return matcher(searchFields, query);
+      }
+      return searchFields.join(' ').toLowerCase().includes(query.toLowerCase());
+    });
+  }
+
+  currentPage = 1;
+  renderPaginatedTable();
 }
 
 /**
@@ -223,7 +412,7 @@ function openCreateEmployeeModal() {
             <input type="number" id="inpLuong" name="luong" value="5000000" min="5000000" step="500000" required
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold text-emerald-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0088ff]/20 focus:border-[#0088ff] transition">
             <span class="text-[11px] text-amber-600 mt-0.5 block font-medium">
-              <i class="fa-solid fa-triangle-exclamation mr-1"></i>Quy tắc BR01: Lương tối thiểu 5,000,000 VNĐ.
+              <i class="fa-solid fa-triangle-exclamation mr-1"></i>Lương tối thiểu 5,000,000 VNĐ.
             </span>
           </div>
         </div>
@@ -325,7 +514,7 @@ async function editEmployee(manv) {
               <input type="number" id="inpLuong" name="luong" value="${emp.LUONG || 5000000}" min="5000000" step="500000" required
                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold text-emerald-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0088ff]/20 focus:border-[#0088ff] transition">
               <span class="text-[11px] text-amber-600 mt-0.5 block font-medium">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i>Quy tắc BR01: Lương tối thiểu 5,000,000 VNĐ.
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i>Lương tối thiểu 5,000,000 VNĐ.
               </span>
             </div>
           </div>
@@ -488,7 +677,7 @@ async function handleEmployeeSubmit(e, action, manv = null) {
 function deleteEmployee(manv, fullName) {
   showConfirm({
     title: 'Xác nhận xóa nhân viên?',
-    message: `Bạn có chắc chắn muốn xóa nhân viên <b>${escapeHtml(fullName)}</b> (Mã NV: <b>${manv}</b>)?<br><br><span class="text-xs text-rose-500 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i>Quy tắc BR11: Không thể xóa nếu nhân viên đã từng lập Đơn đặt hàng, Phiếu nhập hoặc Phiếu xuất.</span>`,
+    message: `Bạn có chắc chắn muốn xóa nhân viên <b>${escapeHtml(fullName)}</b> (Mã NV: <b>${manv}</b>)?`,
     confirmText: 'Đồng ý xóa',
     confirmClass: 'btn-sapo-delete',
     onConfirm: async () => {
@@ -552,12 +741,12 @@ function updateUndoButton(undoState) {
     btnUndo.title = undoState.lastAction?.description 
       ? `Phục hồi thao tác: ${undoState.lastAction.description}` 
       : 'Phục hồi thao tác vừa thực hiện';
-    btnUndo.innerHTML = '<i class="fa-solid fa-rotate-left mr-1"></i> Phục hồi (Undo)';
+    btnUndo.innerHTML = '<i class="fa-solid fa-rotate-left mr-1"></i> Phục hồi';
   } else {
     btnUndo.disabled = true;
     btnUndo.classList.add('opacity-50', 'cursor-not-allowed');
     btnUndo.title = 'Chưa có thao tác nào để phục hồi';
-    btnUndo.innerHTML = '<i class="fa-solid fa-rotate-left mr-1"></i> Phục hồi (Undo)';
+    btnUndo.innerHTML = '<i class="fa-solid fa-rotate-left mr-1"></i> Phục hồi';
   }
 }
 
@@ -592,3 +781,11 @@ function escapeJs(str) {
   if (!str) return '';
   return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
+
+// Gắn các hàm phân trang & thao tác lên window để inline events hoạt động ổn định
+window.changePageSize = changePageSize;
+window.goToPage = goToPage;
+window.goToPrevPage = goToPrevPage;
+window.goToNextPage = goToNextPage;
+window.renderEmployeeTable = renderEmployeeTable;
+window.renderPaginatedTable = renderPaginatedTable;

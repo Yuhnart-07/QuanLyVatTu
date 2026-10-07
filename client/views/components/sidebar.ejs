@@ -26,22 +26,22 @@
           Danh mục gốc
         </div>
         <div class="space-y-1">
-          <!-- 1.1 Nhân viên -->
+          <!-- Nhân viên -->
           <a 
             href="/employees" 
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/employees')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-users w-4 text-center"></i>
-            <span>1.1 Nhân viên</span>
+            <span>Nhân viên</span>
           </a>
 
-          <!-- 1.2 Vật tư -->
+          <!-- Vật tư -->
           <a 
             href="/materials" 
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/materials')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-box-archive w-4 text-center"></i>
-            <span>1.2 Danh mục vật tư</span>
+            <span>Vật tư</span>
           </a>
         </div>
       </div>
@@ -52,31 +52,31 @@
           Quản lý luân chuyển
         </div>
         <div class="space-y-1">
-          <!-- 1.3 Đơn đặt hàng -->
+          <!-- Đơn đặt hàng -->
           <a 
             href="/orders" 
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/orders')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>
-            <span>1.3 Đơn đặt hàng</span>
+            <span>Đơn đặt hàng</span>
           </a>
 
-          <!-- 1.4 Phiếu nhập kho -->
+          <!-- Phiếu nhập kho -->
           <a 
             href="/receipts" 
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/receipts')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-truck-ramp-box w-4 text-center"></i>
-            <span>1.4 Phiếu nhập kho</span>
+            <span>Phiếu nhập kho</span>
           </a>
 
-          <!-- 1.5 Phiếu xuất kho -->
+          <!-- Phiếu xuất kho -->
           <a 
             href="/issues" 
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/issues')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-dolly w-4 text-center"></i>
-            <span>1.5 Phiếu xuất kho</span>
+            <span>Phiếu xuất kho</span>
           </a>
         </div>
       </div>
@@ -92,7 +92,7 @@
             class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/reports')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
           >
             <i class="fa-solid fa-chart-line w-4 text-center"></i>
-            <span>2. Báo biểu (2.1 - 2.7)</span>
+            <span>Báo biểu</span>
           </a>
         </div>
       </div>
@@ -105,22 +105,22 @@
             <i class="fa-solid fa-shield-halved text-[10px]"></i>
           </div>
           <div class="space-y-1">
-            <!-- 3.1 Tạo / Xóa Login -->
+            <!-- Quản lý Login -->
             <a 
               href="/admin/logins" 
               class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/admin/logins')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
             >
               <i class="fa-solid fa-user-gear w-4 text-center"></i>
-              <span>3.1 Quản lý Login</span>
+              <span>Quản lý Login</span>
             </a>
 
-            <!-- 3.2 Sao lưu & Phục hồi CSDL -->
+            <!-- Sao lưu & Phục hồi CSDL -->
             <a 
               href="/admin/backup-restore" 
               class="flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition <%= (typeof path !== 'undefined' && path.startsWith('/admin/backup')) ? 'bg-[#0088ff]/15 text-[#0088ff] font-semibold border-l-2 border-[#0088ff]' : 'text-slate-400 hover:text-white hover:bg-[#1f2937]' %>"
             >
               <i class="fa-solid fa-database w-4 text-center"></i>
-              <span>3.2 Sao lưu - Phục hồi</span>
+              <span>Sao lưu - Phục hồi</span>
             </a>
           </div>
         </div>

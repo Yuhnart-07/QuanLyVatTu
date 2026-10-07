@@ -163,4 +163,84 @@ function formatDate(dateString) {
   return d.toLocaleDateString('vi-VN');
 }
 
+// 7. TIỆN ÍCH TÌM KIẾM TIẾNG VIỆT KHÔNG DẤU & ĐA TỪ KHÓA (VIETNAMESE SEARCH ENGINE)
+
+/**
+ * Chuẩn hóa và loại bỏ dấu tiếng Việt (Unicode NFD).
+ * Hỗ trợ chuyển đổi toàn bộ ký tự có dấu, mũ, móc về chữ không dấu cơ bản (a-z, d).
+ * An toàn tuyệt đối với giá trị null / undefined / số / boolean.
+ *
+ * @param {any} str - Chuỗi hoặc giá trị cần chuẩn hóa
+ * @returns {string} Chuỗi không dấu, viết thường, loại bỏ khoảng trắng thừa
+ */
+function removeVietnameseTones(str) {
+  if (str === null || str === undefined) return '';
+  const text = String(str);
+  return text
+    .normalize('NFD')                                     // Tách nguyên âm và dấu thanh riêng biệt
+    .replace(/[\u0300-\u036f]/g, '')                      // Xóa sạch các dấu thanh (sắc, huyền, hỏi, ngã, nặng, mũ, móc)
+    .replace(/[đĐ]/g, m => (m === 'đ' ? 'd' : 'D'))       // Chuyển đ/Đ thành d/D (vì Unicode không tách đ thành d + dấu)
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * So sánh từ khóa tìm kiếm với tập dữ liệu nguồn (Token-based Vietnamese Search).
+ * - Tách query thành các từ khóa (tokens) riêng lẻ theo khoảng trắng.
+ * - Kiểm tra tất cả các token có đồng thời xuất hiện trong nội dung nguồn hay không (AND logic).
+ * - Hỗ trợ gõ dở dang (ví dụ "Nguyen Va" vẫn khớp "Nguyễn Văn An").
+ * - Hỗ trợ tìm kiếm theo nhiều trường khác nhau (Mã NV, Họ tên, Địa chỉ, Ghi chú).
+ * - 🛡️ An toàn tuyệt đối với null / undefined: Không bao giờ biến null thành chuỗi text "null".
+ *
+ * @param {string|Array<any>} source - Chuỗi hoặc mảng các trường dữ liệu của đối tượng
+ * @param {string} query - Từ khóa người dùng nhập vào ô tìm kiếm
+ * @returns {boolean} True nếu khớp tất cả từ khóa, False nếu không khớp
+ */
+function matchSearchTerms(source, query) {
+  // Nếu ô tìm kiếm rỗng, mặc định hiển thị toàn bộ
+  if (!query || String(query).trim() === '') return true;
+
+  // Nếu không có nguồn dữ liệu để tìm kiếm
+  if (source === null || source === undefined) return false;
+
+  // Lọc sạch các giá trị null, undefined và các chuỗi rỗng trước khi kết hợp
+  let cleanParts = [];
+  if (Array.isArray(source)) {
+    cleanParts = source.filter(item => {
+      if (item === null || item === undefined) return false;
+      const s = String(item).trim();
+      // Loại trừ các giá trị rỗng hoặc chuỗi "null"/"undefined" vô tình bị ép kiểu
+      return s.length > 0 && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined';
+    });
+  } else {
+    const s = String(source).trim();
+    if (s.length > 0 && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined') {
+      cleanParts = [s];
+    }
+  }
+
+  // Nếu sau khi lọc không còn nội dung nào hợp lệ
+  if (cleanParts.length === 0) return false;
+
+  // Ghép các trường hợp lệ thành 1 chuỗi nguồn và chuẩn hóa không dấu
+  const combinedSource = cleanParts.join(' ');
+  const normalizedSource = removeVietnameseTones(combinedSource);
+
+  // Tách từ khóa người dùng thành các token rời
+  const queryTokens = removeVietnameseTones(query)
+    .split(/\s+/)
+    .filter(token => token.length > 0);
+
+  if (queryTokens.length === 0) return true;
+
+  // Quy tắc AND: Mọi token đều phải xuất hiện trong nguồn dữ liệu
+  return queryTokens.every(token => normalizedSource.includes(token));
+}
+
+// Gắn vào window để mọi script con đều truy cập được toàn cục
+if (typeof window !== 'undefined') {
+  window.removeVietnameseTones = removeVietnameseTones;
+  window.matchSearchTerms = matchSearchTerms;
+}
+
 console.log('>>> [QLVT] Sapo UI Engine đã được khởi tạo sẵn sàng.');

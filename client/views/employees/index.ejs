@@ -10,20 +10,9 @@
   <!-- 1. BREADCRUMB & TIÊU ĐỀ TRANG -->
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
-      <div class="flex items-center space-x-2 text-xs text-slate-500 mb-1">
-        <a href="/" class="hover:text-blue-600 transition">Hệ thống</a>
-        <span>/</span>
-        <span class="text-slate-500">Quản lý Danh mục</span>
-        <span>/</span>
-        <span class="text-slate-700 font-medium">Danh Sách Nhân Viên</span>
-      </div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-        <span>Quản Lý Nhân Viên</span>
-        <span class="px-2.5 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700">Mục 1.1</span>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+        Quản Lý Nhân Viên
       </h1>
-      <p class="text-sm text-slate-500 mt-1">
-        Quản lý danh mục nhân sự, tiền lương, hỗ trợ thêm/sửa/xóa và phục hồi (Undo) 1 bước gần nhất.
-      </p>
     </div>
 
     <!-- Thanh nút hành động nhanh -->
@@ -38,18 +27,7 @@
         title="<%= (typeof undoState !== 'undefined' && undoState && undoState.lastAction?.description) ? 'Phục hồi thao tác: ' + undoState.lastAction.description : 'Chưa có thao tác nào để phục hồi' %>"
       >
         <i class="fa-solid fa-rotate-left mr-1"></i>
-        <span>Phục hồi (Undo)</span>
-      </button>
-
-      <!-- Nút Làm mới -->
-      <button 
-        type="button"
-        onclick="window.location.reload()" 
-        class="sapo-btn btn-sapo-outline" 
-        title="Tải lại trang"
-      >
-        <i class="fa-solid fa-arrows-rotate mr-1"></i>
-        <span>Làm mới</span>
+        <span>Phục hồi</span>
       </button>
 
       <!-- Nút Thêm mới nhân viên -->
@@ -119,16 +97,6 @@
     <!-- Header của Card: Bộ lọc & Ô Tìm kiếm thời gian thực -->
     <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white rounded-t-xl">
       
-      <!-- Filter Tabs chuẩn Sapo -->
-      <div class="flex items-center space-x-2">
-        <button class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-list-check"></i>
-          <span>Tất cả nhân viên</span>
-          <span class="bg-blue-200/80 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono">
-            <%= (typeof employees !== 'undefined' && employees) ? employees.length : 0 %>
-          </span>
-        </button>
-      </div>
 
       <!-- Ô tìm kiếm trong bảng -->
       <div class="relative w-full md:w-80">
@@ -160,7 +128,8 @@
         </thead>
         <tbody id="employeeTableBody" class="divide-y divide-slate-100">
           <% if (typeof employees !== 'undefined' && employees && employees.length > 0) { %>
-            <% employees.forEach(emp => { %>
+            <% const initialDisplay = employees.slice(0, 10); %>
+            <% initialDisplay.forEach(emp => { %>
               <% 
                 const initials = (emp.TEN ? emp.TEN[0] : 'NV').toUpperCase();
                 const fullName = `${emp.HO || ''} ${emp.TEN || ''}`.trim();
@@ -187,7 +156,6 @@
                     </div>
                     <div>
                       <div class="font-semibold text-slate-900"><%= fullName %></div>
-                      <div class="text-[11px] text-slate-400 font-mono">NV_<%= emp.MANV %></div>
                     </div>
                   </div>
                 </td>
@@ -254,6 +222,11 @@
   </div>
 
 </div>
+
+<!-- Dữ liệu ban đầu phục vụ phân trang tức thì -->
+<script>
+  window.INITIAL_EMPLOYEES = <%- JSON.stringify(employees || []) %>;
+</script>
 
 <!-- Nạp file JavaScript xử lý riêng cho nghiệp vụ Quản lý Nhân viên -->
 <script src="/js/employees.js"></script>

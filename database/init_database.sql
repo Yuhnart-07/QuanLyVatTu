@@ -49,7 +49,7 @@ CREATE TABLE dbo.Nhanvien (
     DIACHI      NVARCHAR(100)   NULL,           -- Địa chỉ
     NGAYSINH    DATE            NULL,           -- Ngày sinh
     LUONG       FLOAT           NULL,           -- Lương tối thiểu 5 triệu
-    GHICHU      TEXT            NULL,           -- Ghi chú thêm
+    GHICHU      NVARCHAR(MAX)   NULL,           -- Ghi chú thêm (Unicode chuẩn hóa từ TEXT)
 
     CONSTRAINT PK_Nhanvien PRIMARY KEY (MANV),
     CONSTRAINT CK_Nhanvien_Luong CHECK (LUONG >= 5000000)

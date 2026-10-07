@@ -200,6 +200,10 @@ async function runSetup() {
       BEGIN
         CREATE LOGIN [NV_1] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
       END
+      ELSE
+      BEGIN
+        ALTER LOGIN [NV_1] WITH PASSWORD = N'123456';
+      END
 
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_1')
       BEGIN
@@ -211,6 +215,10 @@ async function runSetup() {
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_2')
       BEGIN
         CREATE LOGIN [NV_2] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
+      END
+      ELSE
+      BEGIN
+        ALTER LOGIN [NV_2] WITH PASSWORD = N'123456';
       END
 
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_2')
