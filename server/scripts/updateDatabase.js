@@ -77,10 +77,10 @@ async function executeSqlFile(pool, filePath) {
  */
 async function syncSqlDirectory(pool, relativeDir, objectType, checkQuery) {
   const dirPath = path.join(__dirname, '../../', relativeDir);
-  console.log(`\n📂 [${objectType}] Đang quét thư mục [${relativeDir}]...`);
+  console.log(`\n[${objectType}] Dang quet thu muc [${relativeDir}]...`);
 
   if (!fs.existsSync(dirPath)) {
-    console.log(`   ⚠️ Thư mục [${relativeDir}] không tồn tại.`);
+    console.log(`   Thu muc [${relativeDir}] khong ton tai.`);
     return { total: 0, newCount: 0, updateCount: 0 };
   }
 
@@ -90,7 +90,7 @@ async function syncSqlDirectory(pool, relativeDir, objectType, checkQuery) {
     .sort();
 
   if (files.length === 0) {
-    console.log(`   ℹ️ Thư mục [${relativeDir}] hiện chưa có file .sql nào (đang trống).`);
+    console.log(`   Thu muc [${relativeDir}] hien chua co file .sql nao (dang trong).`);
     return { total: 0, newCount: 0, updateCount: 0 };
   }
 
@@ -100,7 +100,7 @@ async function syncSqlDirectory(pool, relativeDir, objectType, checkQuery) {
     const result = await pool.request().query(checkQuery);
     existingObjects = new Set(result.recordset.map(r => r.name.toLowerCase()));
   } catch (err) {
-    console.warn(`   ⚠️ Không thể đọc danh sách ${objectType} hiện tại:`, err.message);
+    console.warn(`   Khong the doc danh sach ${objectType} hien tai:`, err.message);
   }
 
   let newCount = 0;
@@ -114,25 +114,25 @@ async function syncSqlDirectory(pool, relativeDir, objectType, checkQuery) {
     await executeSqlFile(pool, filePath);
 
     if (isExisting) {
-      console.log(`   🔄 [LÀM MỚI] ${file}`);
+      console.log(`   [LAM MOI] ${file}`);
       updateCount++;
     } else {
-      console.log(`   🆕 [THÊM MỚI] ${file}`);
+      console.log(`   [THEM MOI] ${file}`);
       newCount++;
     }
   }
 
-  console.log(`   ✅ Đã đồng bộ ${files.length} ${objectType}(s) (${newCount} mới, ${updateCount} cập nhật).`);
+  console.log(`   Da dong bo ${files.length} ${objectType}(s) (${newCount} moi, ${updateCount} cap nhat).`);
   return { total: files.length, newCount, updateCount };
 }
 
 async function runUpdate() {
   console.log('======================================================================');
-  console.log('🔄 [QLVT] BẮT ĐẦU CẬP NHẬT DATABASE AN TOÀN (BẢO TOÀN DỮ LIỆU)');
-  console.log(`📌 Server: ${dbConfig.server}:${dbConfig.port} | Database: ${DB_NAME}`);
-  console.log('🛡️  Cam kết:');
-  console.log('   • CẬP NHẬT: Functions, Procedures, Triggers, Roles & Logins');
-  console.log('   • BẢO TOÀN : KHÔNG chạm tables/, KHÔNG chạm seed/, KHÔNG mất dữ liệu');
+  console.log('[QLVT] BAT DAU CAP NHAT DATABASE AN TOAN (BAO TOAN DU LIEU)');
+  console.log(`Server: ${dbConfig.server}:${dbConfig.port} | Database: ${DB_NAME}`);
+  console.log('Cam ket:');
+  console.log('   - CAP NHAT: Functions, Procedures, Triggers, Roles & Logins');
+  console.log('   - BAO TOAN: KHONG cham tables/, KHONG cham seed/, KHONG mat du lieu');
   console.log('======================================================================');
 
   let pool = null;
@@ -141,14 +141,14 @@ async function runUpdate() {
     // -----------------------------------------------------------------
     // BƯỚC 1: Kết nối vào CSDL QLVT
     // -----------------------------------------------------------------
-    console.log(`\n👉 [1/5] Đang kết nối tới CSDL [${DB_NAME}]...`);
+    console.log(`\n[1/5] Dang ket noi toi CSDL [${DB_NAME}]...`);
     pool = await sql.connect({ ...dbConfig, database: DB_NAME });
-    console.log(`   ✅ Kết nối CSDL [${DB_NAME}] thành công.`);
+    console.log(`   Ket noi CSDL [${DB_NAME}] thanh cong.`);
 
     // -----------------------------------------------------------------
     // BƯỚC 2: Đồng bộ FUNCTIONS (database/functions/)
     // -----------------------------------------------------------------
-    console.log('\n👉 [2/5] Đồng bộ Functions (Hàm người dùng)...');
+    console.log('\n[2/5] Dong bo Functions (Ham nguoi dung)...');
     const fnResult = await syncSqlDirectory(
       pool,
       'database/functions',
@@ -159,7 +159,7 @@ async function runUpdate() {
     // -----------------------------------------------------------------
     // BƯỚC 3: Đồng bộ PROCEDURES (database/procedures/)
     // -----------------------------------------------------------------
-    console.log('\n👉 [3/5] Đồng bộ Stored Procedures (Thủ tục lưu trữ)...');
+    console.log('\n[3/5] Dong bo Stored Procedures (Thu tuc luu trut)...');
     const spResult = await syncSqlDirectory(
       pool,
       'database/procedures',
@@ -170,7 +170,7 @@ async function runUpdate() {
     // -----------------------------------------------------------------
     // BƯỚC 4: Đồng bộ TRIGGERS (database/triggers/)
     // -----------------------------------------------------------------
-    console.log('\n👉 [4/5] Đồng bộ Triggers (Bộ kích hoạt)...');
+    console.log('\n[4/5] Dong bo Triggers (Bo kich hoat)...');
     const trResult = await syncSqlDirectory(
       pool,
       'database/triggers',
@@ -181,7 +181,7 @@ async function runUpdate() {
     // -----------------------------------------------------------------
     // BƯỚC 5: Đảm bảo Roles, Quyền và Logins kiểm thử tồn tại (IF NOT EXISTS)
     // -----------------------------------------------------------------
-    console.log('\n👉 [5/5] Kiểm tra & bổ sung Roles, Quyền và Logins kiểm thử nếu thiếu...');
+    console.log('\n[5/5] Kiem tra & bo sung Roles, Quyen va Logins kiem thu neu thieu...');
 
     await pool.request().batch(`
       -- 1. Đảm bảo Roles tồn tại
@@ -229,23 +229,23 @@ async function runUpdate() {
       ALTER ROLE [Nhanvien] ADD MEMBER [NV_2];
     `);
 
-    console.log('   ✅ Đã kiểm tra Roles, Quyền và Logins hệ thống.');
+    console.log('   Da kiem tra Roles, Quyen va Logins he thong.');
 
     // -----------------------------------------------------------------
     // BÁO CÁO TỔNG KẾT
     // -----------------------------------------------------------------
     console.log('\n======================================================================');
-    console.log('🎉🎉 CẬP NHẬT DATABASE THÀNH CÔNG 100%!');
-    console.log('📊 Tổng kết đồng bộ:');
-    console.log(`   • Functions : ${fnResult.total} file (${fnResult.newCount} mới, ${fnResult.updateCount} cập nhật)`);
-    console.log(`   • Procedures: ${spResult.total} file (${spResult.newCount} mới, ${spResult.updateCount} cập nhật)`);
-    console.log(`   • Triggers  : ${trResult.total} file (${trResult.newCount} mới, ${trResult.updateCount} cập nhật)`);
-    console.log('🛡️  Toàn bộ dữ liệu của bạn trong 8 bảng được bảo toàn nguyên vẹn.');
-    console.log('👉 Khởi động web để làm việc tiếp: npm run dev (hoặc npm start)');
+    console.log('CAP NHAT DATABASE THANH CONG!');
+    console.log('Tong ket dong bo:');
+    console.log(`   - Functions : ${fnResult.total} file (${fnResult.newCount} moi, ${fnResult.updateCount} cap nhat)`);
+    console.log(`   - Procedures: ${spResult.total} file (${spResult.newCount} moi, ${spResult.updateCount} cap nhat)`);
+    console.log(`   - Triggers  : ${trResult.total} file (${trResult.newCount} moi, ${trResult.updateCount} cap nhat)`);
+    console.log('Toan bo du lieu cua ban trong 8 bang duoc bao toan nguyen ven.');
+    console.log('Khoi dong web de lam viec tiep: npm run dev (hoac npm start)');
     console.log('======================================================================\n');
 
   } catch (error) {
-    console.error('\n❌ CẬP NHẬT DATABASE THẤT BẠI:', error.message);
+    console.error('\nCAP NHAT DATABASE THAT BAI:', error.message);
     process.exit(1);
   } finally {
     if (pool) await pool.close();

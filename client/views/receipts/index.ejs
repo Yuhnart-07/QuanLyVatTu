@@ -1,52 +1,177 @@
-<!-- View 1.4: Phiếu Nhập Hàng (Master-Detail) -->
-<!-- Tham chiếu: De.md Mục II.1.4 (Ràng buộc: SL nhập <= SL còn lại của DDH) -->
+<!-- View 1.4: Quản Lý Phiếu Nhập Kho (PhieuNhap & CTPN) -->
+<!-- Người phụ trách: Thành viên 2 (Nhập kho & Đối soát đơn hàng) -->
+<!-- Tham chiếu: Rule.md, docs/01-SYSTEM_RULES.md, docs/03-BUSINESS_MODULES.md -->
 
-<div class="space-y-6">
-  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+<%
+  let totalReceipts = (typeof receipts !== 'undefined' && receipts) ? receipts.length : 0;
+  let totalValue = 0;
+  let uniqueOrders = new Set();
+  if (typeof receipts !== 'undefined' && receipts) {
+    receipts.forEach(r => {
+      totalValue += Number(r.TongTien) || 0;
+      if (r.MasoDDH) uniqueOrders.add(r.MasoDDH.trim());
+    });
+  }
+%>
+
+<div class="space-y-5">
+  
+  <!-- 1. HEADER TRANG: Tiêu đề + Nút Lập phiếu mới -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
-      <h2 class="font-bold text-gray-800 text-lg">1.4 Phiếu Nhập Kho (PhieuNhap & CTPN)</h2>
-      <p class="text-xs text-gray-500">Nhập hàng dựa vào Đơn đặt hàng | Kiểm tra SL nhập $\le$ SL đặt</p>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+        <i class="fa-solid fa-boxes-packing text-emerald-600"></i>
+        <span>Quản Lý Phiếu Nhập Kho</span>
+      </h1>
+      <p class="text-xs text-slate-500 mt-1">
+        Theo dõi chứng từ nhập kho theo đơn đặt hàng, kiểm soát hạn mức và cập nhật tồn kho tự động
+      </p>
     </div>
-    <button onclick="openCreateReceiptModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
-      <i class="fa-solid fa-plus"></i>
-      <span>Lập Phiếu Nhập Mới</span>
-    </button>
+
+    <!-- Cụm nút hành động chuẩn Sapo -->
+    <div class="flex items-center space-x-2.5">
+      <button 
+        type="button" 
+        onclick="openCreateReceiptModal()" 
+        class="sapo-btn btn-sapo-save"
+        title="Lập phiếu nhập kho mới"
+      >
+        <i class="fa-solid fa-plus"></i>
+        <span>Lập Phiếu Nhập Mới</span>
+      </button>
+    </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+  <!-- 2. THẺ THỐNG KÊ TỔNG QUAN (QUICK METRICS) -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Tổng số phiếu nhập -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Phiếu Nhập</div>
+        <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="statTotalReceipts">
+          <%= totalReceipts %>
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-receipt"></i>
+      </div>
+    </div>
+
+    <!-- Tổng giá trị nhập kho -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Giá Trị Nhập Kho</div>
+        <div class="text-2xl font-bold font-mono text-blue-600 mt-1">
+          <%= Number(totalValue).toLocaleString('vi-VN') %> đ
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-money-bill-wave"></i>
+      </div>
+    </div>
+
+    <!-- Số đơn đặt hàng đã nhập -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đơn Hàng Đã Giao Nhận</div>
+        <div class="text-2xl font-bold font-mono text-indigo-600 mt-1">
+          <%= uniqueOrders.size %>
+        </div>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+        <i class="fa-solid fa-file-circle-check"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. THẺ CARD CHÍNH CHỨA BẢNG DỮ LIỆU & BỘ LỌC -->
+  <div class="sapo-card overflow-hidden">
+    
+    <!-- Thanh tìm kiếm nhanh -->
+    <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/40">
+      <div class="relative w-full sm:w-80">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input 
+          type="text" 
+          id="receiptSearchInput"
+          placeholder="Tìm theo mã PN, mã DDH, nhà cung cấp..." 
+          class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#0088ff] focus:ring-1 focus:ring-[#0088ff]"
+        >
+      </div>
+
+      <div class="flex items-center space-x-2 text-xs text-slate-500">
+        <span>Click vào dòng để xem chi tiết đầy đủ Master-Detail</span>
+      </div>
+    </div>
+
+    <!-- BẢNG DỮ LIỆU CHUẨN SAPO -->
+    <div class="sapo-table-container">
+      <table class="sapo-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3 border-b">Mã PN</th>
-            <th class="px-4 py-3 border-b">Ngày nhập</th>
-            <th class="px-4 py-3 border-b">Mã số DDH</th>
-            <th class="px-4 py-3 border-b">Nhà cung cấp</th>
-            <th class="px-4 py-3 border-b">Nhân viên nhận</th>
-            <th class="px-4 py-3 border-b text-center">Thao tác</th>
+            <th class="w-12 text-center">#</th>
+            <th class="w-28">Mã PN</th>
+            <th class="w-32">Ngày Nhập</th>
+            <th class="w-32">Mã Số DDH</th>
+            <th>Nhà Cung Cấp</th>
+            <th>Nhân Viên Nhận</th>
+            <th class="text-right w-36">Tổng Trị Giá</th>
+            <th class="text-center w-28">Thao Tác</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody id="receiptsTableBody">
           <% if (typeof receipts !== 'undefined' && receipts && receipts.length > 0) { %>
-            <% receipts.forEach(pn => { %>
-              <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="viewReceiptDetails('<%= pn.MAPN %>')">
-                <td class="px-4 py-3 font-semibold font-mono text-emerald-600"><%= pn.MAPN %></td>
-                <td class="px-4 py-3"><%= pn.NGAY ? new Date(pn.NGAY).toLocaleDateString('vi-VN') : '-' %></td>
-                <td class="px-4 py-3 font-mono text-indigo-600"><%= pn.MasoDDH %></td>
-                <td class="px-4 py-3 text-gray-700"><%= pn.NhaCC || '-' %></td>
-                <td class="px-4 py-3 text-gray-600"><%= pn.HoTenNV || ('Mã NV: ' + pn.MANV) %></td>
-                <td class="px-4 py-3 text-center space-x-2">
-                  <button onclick="event.stopPropagation(); viewReceiptDetails('<%= pn.MAPN %>')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                    <i class="fa-solid fa-eye"></i> Xem chi tiết
+            <% receipts.forEach((pn, index) => { %>
+              <tr 
+                class="hover:bg-slate-50/80 transition cursor-pointer" 
+                onclick="viewReceiptDetails('<%= pn.MAPN %>')"
+              >
+                <td class="text-center text-slate-400 text-xs font-mono"><%= index + 1 %></td>
+                <td class="sapo-cell-code text-emerald-600 font-bold font-mono"><%= pn.MAPN %></td>
+                <td class="text-xs text-slate-600"><%= pn.NGAY ? new Date(pn.NGAY).toLocaleDateString('vi-VN') : '-' %></td>
+                <td class="font-mono text-xs font-semibold text-indigo-600"><%= pn.MasoDDH || '-' %></td>
+                <td class="text-xs text-slate-800 font-medium"><%= pn.NhaCC || '-' %></td>
+                <td class="text-xs text-slate-600"><%= pn.HoTenNV || ('Mã NV: ' + pn.MANV) %></td>
+                <td class="sapo-cell-amount text-right font-mono font-semibold text-emerald-700">
+                  <%= (pn.TongTien || 0).toLocaleString('vi-VN') %> VNĐ
+                </td>
+                <td class="text-center space-x-1" onclick="event.stopPropagation()">
+                  <button 
+                    onclick="viewReceiptDetails('<%= pn.MAPN %>')" 
+                    class="sapo-btn-icon" 
+                    title="Xem chi tiết phiếu nhập"
+                  >
+                    <i class="fa-solid fa-eye text-blue-600"></i>
+                  </button>
+                  <button 
+                    onclick="handleDeleteReceipt('<%= pn.MAPN %>')" 
+                    class="sapo-btn-icon delete" 
+                    title="Xóa phiếu nhập và hoàn tác tồn kho"
+                  >
+                    <i class="fa-solid fa-trash-can text-rose-500"></i>
                   </button>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Chưa có phiếu nhập kho nào.</td></tr>
+            <tr>
+              <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <i class="fa-solid fa-box-open text-4xl mb-3 text-slate-300"></i>
+                  <span class="text-sm font-medium">Chưa có phiếu nhập kho nào trong hệ thống.</span>
+                </div>
+              </td>
+            </tr>
           <% } %>
         </tbody>
       </table>
     </div>
+
+    <!-- Phân trang Sapo -->
+    <%- include('../components/pagination') %>
   </div>
+
 </div>
+
+<!-- Nạp file JavaScript xử lý riêng cho nghiệp vụ Phiếu Nhập Kho -->
+<script src="/js/receipts.js"></script>

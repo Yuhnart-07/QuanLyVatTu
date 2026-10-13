@@ -16,16 +16,16 @@ let totalTests = 0;
 function assert(condition, testName) {
   totalTests++;
   if (condition) {
-    console.log(`  ✅ [PASS] ${testName}`);
+    console.log(`  [PASS] ${testName}`);
     passedTests++;
   } else {
-    console.error(`  ❌ [FAIL] ${testName}`);
+    console.error(`  [FAIL] ${testName}`);
   }
 }
 
 async function runTests() {
   console.log('===============================================================');
-  console.log('🧪 BẮT ĐẦU KIỂM THỬ TỰ ĐỘNG CHỨC NĂNG QUẢN LÝ NHÂN VIÊN (1.1)');
+  console.log('BAT DAU KIEM THU TU DONG CHUC NANG QUAN LY NHAN VIEN (1.1)');
   console.log('===============================================================\n');
 
   try {
@@ -34,7 +34,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // TEST SUITE 1: TẦNG VALIDATOR (LỚP 2 VALIDATION)
     // -------------------------------------------------------------
-    console.log('👉 [1/5] Kiểm thử Lớp 2: Validator Middleware (BR01 & Input constraints)...');
+    console.log('[1/5] Kiem thu Lop 2: Validator Middleware (BR01 & Input constraints)...');
 
     // Test 1.1: validateCreate với Lương < 5.000.000 VNĐ
     let validatorError = null;
@@ -75,7 +75,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // TEST SUITE 2: TẦNG STORED PROCEDURE (LỚP 3 - BR01 TẠI DATABASE)
     // -------------------------------------------------------------
-    console.log('\n👉 [2/5] Kiểm thử Lớp 3: Stored Procedure & Ràng buộc BR01...');
+    console.log('\n[2/5] Kiem thu Lop 3: Stored Procedure & Rang buoc BR01...');
 
     // Đảm bảo không còn bản ghi tạm MANV = 99
     try { await pool.request().query('DELETE FROM dbo.Nhanvien WHERE MANV IN (99, 100)'); } catch(e) {}
@@ -127,7 +127,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // TEST SUITE 3: STORED PROCEDURE CHẶN XÓA THEO BR11
     // -------------------------------------------------------------
-    console.log('\n👉 [3/5] Kiểm thử Ràng buộc BR11: Chặn xóa nhân viên đã lập phiếu...');
+    console.log('\n[3/5] Kiem thu Rang buoc BR11: Chan xoa nhan vien da lap phieu...');
 
     // Test 3.1: Xóa NV 1 (Đã lập Đơn đặt hàng DDH00001) -> Phải bị chặn
     let deleteNV1Caught = false;
@@ -171,7 +171,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // TEST SUITE 4: CƠ CHẾ PHỤC HỒI (UNDO) 1 BƯỚC GẦN NHẤT
     // -------------------------------------------------------------
-    console.log('\n👉 [4/5] Kiểm thử Logic Phục hồi (Undo) 1 bước gần nhất...');
+    console.log('\n[4/5] Kiem thu Logic Phuc hoi (Undo) 1 buoc gan nhat...');
 
     const fakeSession = {};
 
@@ -244,7 +244,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // TEST SUITE 5: TRUY VẤN DANH SÁCH & CHI TIẾT
     // -------------------------------------------------------------
-    console.log('\n👉 [5/5] Kiểm thử Truy vấn danh sách và chi tiết...');
+    console.log('\n[5/5] Kiem thu Truy van danh sach va chi tiet...');
     const allEmployees = await employeeService.getAllEmployees();
     assert(Array.isArray(allEmployees) && allEmployees.length >= 5,
       `sp_NhanVien_GetAll trả về đủ ${allEmployees.length} nhân viên`);
@@ -257,7 +257,7 @@ async function runTests() {
     // TỔNG KẾT KẾT QUẢ
     // -------------------------------------------------------------
     console.log('\n===============================================================');
-    console.log(`🎉 TỔNG KẾT: ĐẠT ${passedTests}/${totalTests} KIỂM THỬ (100% SUCCESS)`);
+    console.log(`TONG KET: DAT ${passedTests}/${totalTests} KIEM THU (100% SUCCESS)`);
     console.log('===============================================================');
 
   } catch (error) {

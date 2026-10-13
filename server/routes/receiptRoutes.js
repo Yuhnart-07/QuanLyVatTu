@@ -10,6 +10,7 @@ const receiptController = require('../controllers/receiptController');
 const receiptValidator = require('../validators/receiptValidator');
 
 router.get('/', receiptController.getAll);
+router.get('/order-items/:masoDDH', receiptController.getOrderItems);
 router.get('/:id', receiptController.getById);
 router.post('/', receiptValidator.validateCreate, receiptController.create);
 router.delete('/:id', receiptController.delete);

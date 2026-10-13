@@ -84,24 +84,24 @@ async function executeSqlDirectory(pool, relativeDir, objectType) {
     .sort();
 
   if (files.length === 0) {
-    console.log(`   ℹ️ Thư mục [${relativeDir}] hiện chưa có file .sql nào (sẵn sàng khi thêm mới).`);
+    console.log(`   Thu muc [${relativeDir}] hien chua co file .sql nao (san sang khi them moi).`);
     return 0;
   }
 
   for (const file of files) {
     const filePath = path.join(dirPath, file);
     await executeSqlFile(pool, filePath);
-    console.log(`   ⚡ Đã nạp ${objectType}: [${file}]`);
+    console.log(`   Da nap ${objectType}: [${file}]`);
   }
 
-  console.log(`   ✅ Đã nạp thành công ${files.length} ${objectType}(s).`);
+  console.log(`   Da nap thanh cong ${files.length} ${objectType}(s).`);
   return files.length;
 }
 
 async function runSetup() {
   console.log('===============================================================');
-  console.log('🚀 [QLVT] BẮT ĐẦU QUY TRÌNH THIẾT LẬP DATABASE TỰ ĐỘNG');
-  console.log(`📌 Server: ${dbConfig.server}:${dbConfig.port} | Database: ${DB_NAME}`);
+  console.log('[QLVT] BAT DAU QUY TRINH THIET LAP DATABASE TU DONG');
+  console.log(`Server: ${dbConfig.server}:${dbConfig.port} | Database: ${DB_NAME}`);
   console.log('===============================================================\n');
 
   let masterPool = null;
@@ -111,7 +111,7 @@ async function runSetup() {
     // -----------------------------------------------------------------
     // BƯỚC 1: Kết nối 'master' để đảm bảo Database QLVT đã tồn tại
     // -----------------------------------------------------------------
-    console.log(`👉 [1/8] Kiểm tra & khởi tạo CSDL [${DB_NAME}]...`);
+    console.log(`[1/8] Kiem tra & khoi tao CSDL [${DB_NAME}]...`);
     masterPool = await sql.connect({ ...dbConfig, database: 'master' });
     
     await masterPool.request().batch(`
@@ -121,7 +121,7 @@ async function runSetup() {
         PRINT N'>>> Đã tạo CSDL ${DB_NAME}.';
       END
     `);
-    console.log(`   ✅ CSDL [${DB_NAME}] đã sẵn sàng.`);
+    console.log(`   CSDL [${DB_NAME}] da san sang.`);
     await masterPool.close();
     masterPool = null;
 
@@ -133,15 +133,15 @@ async function runSetup() {
     // -----------------------------------------------------------------
     // BƯỚC 3: Tạo 8 bảng dữ liệu từ init_database.sql
     // -----------------------------------------------------------------
-    console.log('\n👉 [2/8] Khởi tạo cấu trúc 8 bảng dữ liệu...');
+    console.log('\n[2/8] Khoi tao cau truc 8 bang du lieu...');
     const initDbPath = path.join(__dirname, '../../database/init_database.sql');
     await executeSqlFile(qlvtPool, initDbPath);
-    console.log('   ✅ Đã khởi tạo 8 bảng thành công.');
+    console.log('   Da khoi tao 8 bang thanh cong.');
 
     // -----------------------------------------------------------------
     // BƯỚC 4: Tạo Roles và Phân quyền (Admin, Nhanvien)
     // -----------------------------------------------------------------
-    console.log('\n👉 [3/8] Thiết lập Database Roles (Admin, Nhanvien) & Phân quyền...');
+    console.log('\n[3/8] Thiet lap Database Roles (Admin, Nhanvien) & Phan quyen...');
     await qlvtPool.request().batch(`
       -- Tạo Role Admin nếu chưa có
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'Admin' AND type = 'R')
@@ -160,40 +160,40 @@ async function runSetup() {
       GRANT EXECUTE TO [Nhanvien];
       GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::dbo TO [Nhanvien];
     `);
-    console.log('   ✅ Thiết lập Roles & Phân quyền hoàn tất.');
+    console.log('   Thiet lap Roles & Phan quyen hoan tat.');
 
     // -----------------------------------------------------------------
     // BƯỚC 5: Tự động quét và nạp toàn bộ Functions (database/functions/)
     // -----------------------------------------------------------------
-    console.log('\n👉 [4/8] Quét và nạp toàn bộ Functions (Hàm người dùng)...');
+    console.log('\n[4/8] Quet va nap toan bo Functions (Ham nguoi dung)...');
     const fnCount = await executeSqlDirectory(qlvtPool, 'database/functions', 'FUNCTION');
 
     // -----------------------------------------------------------------
     // BƯỚC 6: Tự động quét và nạp toàn bộ Stored Procedures (database/procedures/)
     // -----------------------------------------------------------------
-    console.log('\n👉 [5/8] Quét và nạp toàn bộ Stored Procedures (Thủ tục lưu trữ)...');
+    console.log('\n[5/8] Quet va nap toan bo Stored Procedures (Thu tuc luu trut)...');
     const spCount = await executeSqlDirectory(qlvtPool, 'database/procedures', 'PROCEDURE');
 
     // -----------------------------------------------------------------
     // BƯỚC 7: Nạp dữ liệu mẫu kiểm thử (Seed Data)
     // (Được nạp TRƯỚC Triggers để tránh trigger tính tồn kho làm lệch số liệu ban đầu)
     // -----------------------------------------------------------------
-    console.log('\n👉 [6/8] Nạp dữ liệu mẫu kiểm thử (Seed Data)...');
+    console.log('\n[6/8] Nap du lieu mau kiem thu (Seed Data)...');
     const seedPath = path.join(__dirname, '../../database/seed/seed_data.sql');
     await executeSqlFile(qlvtPool, seedPath);
-    console.log('   ✅ Đã nạp Seed Data cho cả 8 bảng thành công.');
+    console.log('   Da nap Seed Data cho ca 8 bang thanh cong.');
 
     // -----------------------------------------------------------------
     // BƯỚC 8: Tự động quét và nạp toàn bộ Triggers (database/triggers/)
     // (Được nạp SAU Seed Data để bảo vệ số lượng tồn kho ban đầu)
     // -----------------------------------------------------------------
-    console.log('\n👉 [7/8] Quét và nạp toàn bộ Triggers (Bộ kích hoạt)...');
+    console.log('\n[7/8] Quet va nap toan bo Triggers (Bo kich hoat)...');
     const trCount = await executeSqlDirectory(qlvtPool, 'database/triggers', 'TRIGGER');
 
     // -----------------------------------------------------------------
     // BƯỚC 9: Tạo các SQL Server Logins & Users mẫu phục vụ kiểm thử
     // -----------------------------------------------------------------
-    console.log('\n👉 [8/8] Tạo tài khoản SQL Server Logins kiểm thử (NV_1, NV_2)...');
+    console.log('\n[8/8] Tao tai khoan SQL Server Logins kiem thu (NV_1, NV_2)...');
     await qlvtPool.request().batch(`
       -- 1. Tài khoản Quản trị: NV_1 (MANV = 1, Role: Admin)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_1')
@@ -227,24 +227,24 @@ async function runSetup() {
       END
       ALTER ROLE [Nhanvien] ADD MEMBER [NV_2];
     `);
-    console.log('   ✅ Đã tạo tài khoản mẫu:');
-    console.log('      👤 Quản trị: Username = "NV_1" | Password = "123456" | Quyền = Admin');
-    console.log('      👤 Nhân viên: Username = "NV_2" | Password = "123456" | Quyền = Nhanvien');
+    console.log('   Da tao tai khoan mau:');
+    console.log('      Quan tri: Username = "NV_1" | Password = "123456" | Quyen = Admin');
+    console.log('      Nhan vien: Username = "NV_2" | Password = "123456" | Quyen = Nhanvien');
 
     console.log('\n===============================================================');
-    console.log('🎉🎉 THIẾT LẬP DATABASE QLVT THÀNH CÔNG 100%! BẠN CÓ THỂ CHẠY WEB NGAY!');
-    console.log('📊 Thống kê đối tượng nạp vào:');
-    console.log(`   • Cấu trúc 8 bảng dữ liệu: Đầy đủ (database/init_database.sql)`);
-    console.log(`   • Functions              : ${fnCount} file`);
-    console.log(`   • Stored Procedures      : ${spCount} file`);
-    console.log(`   • Dữ liệu mẫu (Seed)     : Hoàn tất`);
-    console.log(`   • Triggers               : ${trCount} file`);
-    console.log(`   • Logins kiểm thử        : NV_1 (Admin), NV_2 (Nhanvien)`);
-    console.log('👉 Khởi động web: npm run dev (hoặc npm start)');
+    console.log('THIET LAP DATABASE QLVT THANH CONG!');
+    console.log('Thong ke doi tuong nap vao:');
+    console.log(`   - Cau truc 8 bang du lieu: Day du (database/init_database.sql)`);
+    console.log(`   - Functions              : ${fnCount} file`);
+    console.log(`   - Stored Procedures      : ${spCount} file`);
+    console.log(`   - Du lieu mau (Seed)     : Hoan tat`);
+    console.log(`   - Triggers               : ${trCount} file`);
+    console.log(`   - Logins kiem thu        : NV_1 (Admin), NV_2 (Nhanvien)`);
+    console.log('Khoi dong web: npm run dev (hoac npm start)');
     console.log('===============================================================\n');
 
   } catch (error) {
-    console.error('\n❌ QUY TRÌNH THIẾT LẬP THẤT BẠI:', error.message);
+    console.error('\nQUY TRINH THIET LAP THAT BAI:', error.message);
     process.exit(1);
   } finally {
     if (masterPool) await masterPool.close();

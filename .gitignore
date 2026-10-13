@@ -26,3 +26,6 @@ ImplementMap.md
 PhanTichNghiepVu.md
 docs/**/*.md
 docs/*.md
+!docs/01-SYSTEM_RULES.md
+!docs/02-TECHNOLOGY_PROFILE.md
+!docs/03-BUSINESS_MODULES.md

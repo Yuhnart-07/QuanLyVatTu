@@ -46,8 +46,8 @@ exports.getDetailInOutReport = async (req, res, next) => {
 // 2.5 Thống kê phiếu nhập theo năm
 exports.getReceiptStatsByYearReport = async (req, res, next) => {
   try {
-    const { year } = req.query;
-    const data = await reportService.getReceiptStatsByYearReport(year || new Date().getFullYear());
+    const year = req.query.year || req.query.nam || new Date().getFullYear();
+    const data = await reportService.getReceiptStatsByYearReport(year);
     res.json({ success: true, data });
   } catch (err) { next(err); }
 };
@@ -55,8 +55,8 @@ exports.getReceiptStatsByYearReport = async (req, res, next) => {
 // 2.6 Thống kê phiếu xuất theo năm
 exports.getIssueStatsByYearReport = async (req, res, next) => {
   try {
-    const { year } = req.query;
-    const data = await reportService.getIssueStatsByYearReport(year || new Date().getFullYear());
+    const year = req.query.year || req.query.nam || new Date().getFullYear();
+    const data = await reportService.getIssueStatsByYearReport(year);
     res.json({ success: true, data });
   } catch (err) { next(err); }
 };
