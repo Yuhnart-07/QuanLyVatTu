@@ -195,7 +195,28 @@ async function runSetup() {
     // -----------------------------------------------------------------
     console.log('\n👉 [8/8] Tạo tài khoản SQL Server Logins kiểm thử (NV_1, NV_2)...');
     await qlvtPool.request().batch(`
-      -- 1. Tài khoản Quản trị: NV_1 (MANV = 1, Role: Admin)
+      -- 1. Dọn dẹp triệt để các tài khoản dư thừa (nếu có)
+      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'1')
+      BEGIN
+        ALTER ROLE [Admin] DROP MEMBER [1];
+        DROP USER [1];
+      END
+      IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'admin')
+      BEGIN
+        DROP LOGIN [admin];
+      END
+
+      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'2')
+      BEGIN
+        ALTER ROLE [Nhanvien] DROP MEMBER [2];
+        DROP USER [2];
+      END
+      IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'nhanvien')
+      BEGIN
+        DROP LOGIN [nhanvien];
+      END
+
+      -- 2. Tài khoản Quản trị DUY NHẤT: Login = 'NV_1' (MANV = 1, User = [NV_1], Role: Admin)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_1')
       BEGIN
         CREATE LOGIN [NV_1] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
@@ -211,7 +232,12 @@ async function runSetup() {
       END
       ALTER ROLE [Admin] ADD MEMBER [NV_1];
 
-      -- 2. Tài khoản Nhân viên: NV_2 (MANV = 2, Role: Nhanvien)
+      IF IS_SRVROLEMEMBER('securityadmin', 'NV_1') = 0
+      BEGIN
+        ALTER SERVER ROLE [securityadmin] ADD MEMBER [NV_1];
+      END
+
+      -- 3. Tài khoản Nhân viên DUY NHẤT: Login = 'NV_2' (MANV = 2, User = [NV_2], Role: Nhanvien)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_2')
       BEGIN
         CREATE LOGIN [NV_2] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
@@ -227,9 +253,9 @@ async function runSetup() {
       END
       ALTER ROLE [Nhanvien] ADD MEMBER [NV_2];
     `);
-    console.log('   ✅ Đã tạo tài khoản mẫu:');
-    console.log('      👤 Quản trị: Username = "NV_1" | Password = "123456" | Quyền = Admin');
-    console.log('      👤 Nhân viên: Username = "NV_2" | Password = "123456" | Quyền = Nhanvien');
+    console.log('   Đã tạo 2 tài khoản kiểm thử duy nhất:');
+    console.log('      Quản trị : Login = "NV_1" | Password = "123456" | Role: Admin    (MANV: 1)');
+    console.log('      Nhân viên: Login = "NV_2" | Password = "123456" | Role: Nhanvien (MANV: 2)');
 
     console.log('\n===============================================================');
     console.log('🎉🎉 THIẾT LẬP DATABASE QLVT THÀNH CÔNG 100%! BẠN CÓ THỂ CHẠY WEB NGAY!');

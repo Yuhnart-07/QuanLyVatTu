@@ -92,8 +92,8 @@ npm run db:setup
 6. **Tự động chạy `database/seed/seed_data.sql`:** Nạp đủ 55 nhân viên mẫu và dữ liệu mẫu của 7 bảng còn lại. *(Được nạp TRƯỚC Triggers để tránh trigger tự động tính toán làm lệch số lượng tồn kho ban đầu)*.
 7. Tự động nạp toàn bộ Triggers trong `database/triggers/`.
 8. Tự động tạo 2 tài khoản SQL Server Logins kiểm thử:
-   * 👤 **Admin:** Username = `NV_1` | Password = `123456`
-   * 👤 **Nhân viên:** Username = `NV_2` | Password = `123456`
+   * 👤 **Admin:** Username = `NV_1` | Password = `123456` (User DB = `NV_1`, MANV: 1, Role: Admin)
+   * 👤 **Nhân viên:** Username = `NV_2` | Password = `123456` (User DB = `NV_2`, MANV: 2, Role: Nhanvien)*
 
 #### ⚠️ Lưu ý quan trọng khi chạy `db:setup`:
 * ⛔ **XÓA SẠCH DỮ LIỆU CŨ:** Lệnh này sẽ `DROP` lại các bảng cũ và nạp lại seed data mặc định. Nếu bạn đang có dữ liệu test quan trọng tự nhập trên máy, dữ liệu đó **sẽ bị mất**.

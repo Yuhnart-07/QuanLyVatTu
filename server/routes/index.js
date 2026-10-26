@@ -15,7 +15,7 @@ router.get('/preview', (req, res) => {
   res.locals.currentUser = {
     manv: 1,
     hoTen: 'Nguyễn Văn An',
-    username: 'admin',
+    username: 'NV_1',
     role: 'Admin'
   };
   res.render('preview', { title: 'Design System Demo - Sapo Style' });

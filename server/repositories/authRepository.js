@@ -10,8 +10,8 @@ const { getPool, sql } = require('../config/database');
 
 /**
  * Xác thực tài khoản đăng nhập qua SP sp_XacThucTaiKhoan
- * SP dùng PWDCOMPARE để kiểm tra mật khẩu, trích xuất MANV theo quy ước NV_{MANV}
- * @param {string} username - Tên đăng nhập SQL Server Login (VD: NV_1)
+ * SP dùng PWDCOMPARE kiểm tra mật khẩu, ánh xạ qua SID sang Database User Name (MANV)
+ * @param {string} username - Tên đăng nhập SQL Server Login (VD: NV_1, NV_2)
  * @param {string} password - Mật khẩu người dùng nhập
  * @returns {Object|null} { manv, hoTen, username, role } hoặc null
  */

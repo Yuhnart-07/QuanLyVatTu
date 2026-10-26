@@ -3,7 +3,7 @@
 -- File: sp_XacThucTaiKhoan.sql
 -- Mô tả: Xác thực tài khoản đăng nhập qua SQL Server Security (RULE 04)
 --         Dùng hàm PWDCOMPARE để so khớp mật khẩu trực tiếp trong SP.
---         Trích xuất MANV từ tên Login theo quy ước NV_{MANV}.
+--         Ánh xạ Login qua SID sang Database User Name (chính là MANV dạng số).
 --         Truy vấn Role (Admin / Nhanvien) qua sys.database_role_members.
 -- Tham chiếu: Rule.md mục 12 & Rule 04, ImplementMap.md mục 7.1 & 12
 -- ====================================================================================
@@ -56,16 +56,18 @@ BEGIN
     END
 
     -- -------------------------------------------------------
-    -- 4. Bóc tách MANV từ Database User Name (hỗ trợ USER_{MANV}, NV_{MANV}, hoặc số thuần)
+    -- 4. Xác định MANV từ Database User Name (Quy ước: User Name chính là MANV)
     -- -------------------------------------------------------
     DECLARE @MANV INT = NULL;
 
-    IF @DbUserName LIKE 'USER[_]%'
-        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 6, LEN(@DbUserName)) AS INT);
-    ELSE IF @DbUserName LIKE 'NV[_]%'
+    -- Ưu tiên 1: Tên Database User là số nguyên thuần túy (chính là MANV theo chuẩn của Thầy)
+    SET @MANV = TRY_CAST(@DbUserName AS INT);
+
+    -- Fallback tương thích ngược (nếu CSDL cũ còn User dạng NV_1 hoặc USER_1)
+    IF @MANV IS NULL AND @DbUserName LIKE 'NV[_]%'
         SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 4, LEN(@DbUserName)) AS INT);
-    ELSE
-        SET @MANV = TRY_CAST(@DbUserName AS INT);
+    ELSE IF @MANV IS NULL AND @DbUserName LIKE 'USER[_]%'
+        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 6, LEN(@DbUserName)) AS INT);
 
     IF @MANV IS NULL
     BEGIN
@@ -78,20 +80,22 @@ BEGIN
 
     -- -------------------------------------------------------
     -- 5. Xác định Role qua sys.database_role_members
-    --    Ưu tiên: Admin > Nhanvien
+    --    Ưu tiên: Admin > Nhanvien. Nếu không có role -> Báo lỗi.
     -- -------------------------------------------------------
-    DECLARE @Role NVARCHAR(20) = N'Nhanvien'; -- Mặc định là Nhân viên
+    DECLARE @Role NVARCHAR(20) = NULL;
 
-    -- Kiểm tra xem user có thuộc role 'Admin' không
-    IF EXISTS (
-        SELECT 1
-        FROM sys.database_role_members drm
-        INNER JOIN sys.database_principals role_dp ON drm.role_principal_id = role_dp.principal_id
-        INNER JOIN sys.database_principals member_dp ON drm.member_principal_id = member_dp.principal_id
-        WHERE member_dp.name = @DbUserName
-          AND role_dp.name = N'Admin'
-    )
-        SET @Role = N'Admin';
+    SELECT TOP 1 @Role = role_dp.name
+    FROM sys.database_role_members drm
+    INNER JOIN sys.database_principals role_dp ON drm.role_principal_id = role_dp.principal_id
+    INNER JOIN sys.database_principals member_dp ON drm.member_principal_id = member_dp.principal_id
+    WHERE member_dp.name = @DbUserName
+      AND role_dp.name IN (N'Admin', N'Nhanvien')
+    ORDER BY CASE WHEN role_dp.name = N'Admin' THEN 1 ELSE 2 END; -- Ưu tiên Admin nếu thuộc cả 2 nhóm
+
+    IF @Role IS NULL
+    BEGIN
+        THROW 50001, N'Tài khoản chưa được phân quyền trong hệ thống.', 1;
+    END
 
     -- -------------------------------------------------------
     -- 6. Trả về thông tin người dùng cho Node.js lưu vào session
