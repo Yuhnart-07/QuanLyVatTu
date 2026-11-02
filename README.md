@@ -11,6 +11,12 @@ Dự án phát triển ứng dụng quản lý vật tư theo mô hình phân t�
 * **Bảo mật:** SQL Server Security (Logins, Users, Roles).
 * **Đóng gói:** Docker & Docker Compose.
 
+### 📚 Hệ thống Tài liệu Kiến trúc & Đặc tả (Docs Framework):
+Toàn bộ quy tắc kiến trúc và nghiệp vụ của dự án được chuẩn hóa theo bộ 3 file trong thư mục [`docs/`](docs/):
+* 📐 **[`docs/01-SYSTEM_RULES.md`](docs/01-SYSTEM_RULES.md):** Bộ quy tắc kiến trúc lõi (Clean MVC, 4 Core Rules: OPENJSON, Transaction, Session Identity, SQL Server Security, Validation 3 lớp, phân định trách nhiệm 3 thành viên).
+* ⚙️ **[`docs/02-TECHNOLOGY_PROFILE.md`](docs/02-TECHNOLOGY_PROFILE.md):** Hồ sơ công nghệ triển khai (Express, EJS, SQL Server Connection Pool, chuẩn tuần tự hóa Master-Detail, bảng ánh xạ mã HTTP status).
+* 📋 **[`docs/03-BUSINESS_MODULES.md`](docs/03-BUSINESS_MODULES.md):** Đặc tả 7 module nghiệp vụ, pipeline 4 bước giữa 3 thành viên, chi tiết Rule Sets và Module Contracts (JSON Schemas) phục vụ tích hợp độc lập.
+
 ---
 
 ## 2. HƯỚNG DẪN KHỞI TẠO, CẬP NHẬT & DỮ LIỆU MẪU CSDL

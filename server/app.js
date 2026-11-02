@@ -36,7 +36,7 @@ app.use(session({
   cookie: {
     maxAge: 1000 * 60 * 60 * 8, // 8 tiếng
     httpOnly: true,
-    secure: env.NODE_ENV === 'production'
+    secure: false // Cho phép session cookie chạy qua HTTP (http://localhost:3000)
   }
 }));
 
@@ -57,13 +57,13 @@ app.use(errorMiddleware);
 const PORT = env.PORT;
 app.listen(PORT, async () => {
   console.log(`===================================================`);
-  console.log(`🚀 QLVT Server đang chạy tại: http://localhost:${PORT}`);
-  console.log(`📌 Môi trường: ${env.NODE_ENV}`);
+  console.log(`QLVT Server dang chay tai: http://localhost:${PORT}`);
+  console.log(`Moi truong: ${env.NODE_ENV}`);
   console.log(`===================================================`);
   try {
     await getPool();
   } catch (err) {
-    console.warn('⚠️  Chưa kết nối được SQL Server. Vui lòng kiểm tra file .env');
+    console.warn('Chua ket noi duoc SQL Server. Vui long kiem tra file .env');
   }
 });
 

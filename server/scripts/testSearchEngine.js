@@ -21,7 +21,7 @@ vm.runInContext(mainJs, context);
 const { removeVietnameseTones, matchSearchTerms } = context.window;
 
 console.log('===============================================================');
-console.log('🧪 KIỂM THỬ THUẬT TOÁN TÌM KIẾM TIẾNG VIỆT KHÔNG DẤU & GÕ DỞ DANG');
+console.log('KIEM THU THUAT TOAN TIM KIEM TIENG VIET KHONG DAU & GO DO DANG');
 console.log('===============================================================\n');
 
 const testCases = [
@@ -86,11 +86,11 @@ testCases.forEach((tc, idx) => {
   const result = matchSearchTerms(tc.source, tc.query);
   const pass = result === tc.expected;
   if (pass) passCount++;
-  console.log(`  ${pass ? '✅ [PASS]' : '❌ [FAIL]'} Test ${idx + 1}: ${tc.name} -> ${result} (Kỳ vọng: ${tc.expected})`);
+  console.log(`  ${pass ? '[PASS]' : '[FAIL]'} Test ${idx + 1}: ${tc.name} -> ${result} (Kỳ vọng: ${tc.expected})`);
 });
 
 console.log(`\n===============================================================`);
-console.log(`🎉 TỔNG KẾT: ${passCount}/${testCases.length} TESTS ĐẠT YÊU CẦU (${Math.round(passCount / testCases.length * 100)}%)`);
+console.log(`TONG KET: ${passCount}/${testCases.length} TESTS DAT YEU CAU (${Math.round(passCount / testCases.length * 100)}%)`);
 console.log('===============================================================\n');
 
 if (passCount !== testCases.length) {

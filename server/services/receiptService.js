@@ -27,3 +27,8 @@ exports.createReceipt = async ({ mapn, masoDDH, manv, details }) => {
 exports.deleteReceipt = async (mapn) => {
   return await receiptRepository.delete(mapn);
 };
+
+exports.getOrderItems = async (masoDDH) => {
+  return await receiptRepository.getOrderItems(masoDDH);
+};
+

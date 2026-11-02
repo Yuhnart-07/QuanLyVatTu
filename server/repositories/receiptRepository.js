@@ -49,3 +49,12 @@ exports.delete = async (mapn) => {
     .execute('sp_PhieuNhap_Delete');
   return true;
 };
+
+exports.getOrderItems = async (masoDDH) => {
+  const pool = await getPool();
+  const result = await pool.request()
+    .input('MasoDDH', sql.NChar(8), masoDDH)
+    .execute('sp_PhieuNhap_GetOrderItems');
+  return result.recordset;
+};
+

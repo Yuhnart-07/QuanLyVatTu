@@ -54,3 +54,13 @@ exports.delete = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getOrderItems = async (req, res, next) => {
+  try {
+    const items = await receiptService.getOrderItems(req.params.masoDDH);
+    res.json({ success: true, data: items });
+  } catch (err) {
+    next(err);
+  }
+};
+
