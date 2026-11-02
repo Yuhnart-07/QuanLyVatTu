@@ -1,69 +1,306 @@
-<!-- View 3.1: Form Tạo / Xóa Login -->
-<!-- Tham chiếu: De.md Mục II.3.1 (Giả sử 2 vai trò Admin và Nhanvien) -->
+<!-- ====================================================================================
+     GIAO DIỆN 3.1: FORM TẠO / XÓA LOGIN SQL SERVER
+     Phong cách thiết kế: Sapo SaaS ERP / Modern Inventory Management System
+     Tham chiếu: De.md Mục II.3.1 & PhanTichNghiepVu.md UC05
+     Quy chuẩn: SQL Server Security (Rule 04) - Dropdown chọn NV, Username, Password, Role Admin/NV
+     ==================================================================================== -->
 
-<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-  <div class="border-b border-gray-100 pb-4">
-    <h2 class="text-xl font-bold text-gray-800 flex items-center space-x-2">
-      <i class="fa-solid fa-user-gear text-indigo-600"></i>
-      <span>3.1 Quản Lý Tài Khoản Đăng Nhập (Tạo / Xóa Login)</span>
-    </h2>
-    <p class="text-xs text-gray-500 mt-1">Phân quyền trực tiếp qua SQL Server Logins và Roles: Admin / Nhanvien (Rule 04)</p>
+<div class="space-y-6">
+
+  <!-- 1. TIÊU ĐỀ TRANG VÀ MÔ TẢ CHỨC NĂNG -->
+  <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-[#0088ff]/10 text-[#0088ff] flex items-center justify-center font-bold text-lg shadow-sm">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 tracking-tight">Quản Lý Tài Khoản Đăng Nhập</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Khởi tạo và thu hồi tài khoản, phân quyền Admin và Nhân viên</p>
+      </div>
+    </div>
   </div>
 
-  <form id="createLoginForm" class="space-y-4">
-    <!-- Dropdown chọn nhân viên -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên nhân viên (kèm mã NV)</label>
-      <select name="manv" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-indigo-500">
-        <option value="">-- Chọn nhân viên để cấp tài khoản --</option>
-        <% if (typeof logins !== 'undefined' && logins) { %>
-          <% logins.forEach(nv => { %>
-            <option value="<%= nv.MANV %>"><%= nv.HO %> <%= nv.TEN %> (Mã: <%= nv.MANV %>)</option>
-          <% }) %>
-        <% } %>
-      </select>
-    </div>
+  <!-- 2. KHUNG FORM THAO TÁC CHÍNH (CHUẨN MỤC 3.1) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Ô nhập Username -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">User name</label>
-      <input type="text" name="username" required placeholder="Nhập tên đăng nhập SQL Server..." 
-        class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-indigo-500">
-    </div>
+    <!-- CỘT TRÁI: FORM NHẬP LIỆU CHUẨN 3.1 (Chiếm 5/12 cột màn hình lớn) -->
+    <div class="lg:col-span-5">
+      <div class="sapo-card p-6 space-y-5 sticky top-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-2">
+            <i class="fa-solid fa-pen-to-square text-[#0088ff]"></i>
+            <span>Thông tin cấp phát tài khoản</span>
+          </span>
+          <span id="formModeBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+            Chưa chọn
+          </span>
+        </div>
 
-    <!-- Ô nhập Mật mã -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Mật mã</label>
-      <input type="password" name="password" required placeholder="Nhập mật khẩu..." 
-        class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-indigo-500">
-    </div>
+        <form id="loginManageForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
 
-    <!-- Radio button chọn nhóm quyền -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Thuộc Nhóm quyền</label>
-      <div class="flex space-x-6">
-        <label class="inline-flex items-center">
-          <input type="radio" name="role" value="Nhanvien" checked class="text-indigo-600 focus:ring-indigo-500">
-          <span class="ml-2 text-sm text-gray-700">Nhân viên (Quyền thao tác nghiệp vụ)</span>
-        </label>
-        <label class="inline-flex items-center">
-          <input type="radio" name="role" value="Admin" class="text-indigo-600 focus:ring-indigo-500">
-          <span class="ml-2 text-sm text-gray-700">Admin (Toàn quyền hệ thống)</span>
-        </label>
+          <!-- 1. Dropdown chọn nhân viên (Custom Select căn phải trạng thái) -->
+          <div class="relative" id="customSelectWrapper">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Họ và tên nhân viên <span class="text-rose-500">*</span>
+            </label>
+
+            <!-- Native select ẩn để bảo toàn 100% tương thích dữ liệu và JavaScript -->
+            <select 
+              id="employeeSelect" 
+              name="manv" 
+              required 
+              onchange="handleEmployeeChange(this)"
+              class="hidden"
+            >
+              <option value="" disabled selected>-- Chọn nhân viên để cấp / quản lý tài khoản --</option>
+              <% if (typeof logins !== 'undefined' && logins && logins.length > 0) { %>
+                <% logins.forEach(nv => { %>
+                  <option 
+                    value="<%= nv.MANV %>"
+                    data-has-login="<%= nv.HasLogin %>"
+                    data-username="<%= nv.Username || '' %>"
+                    data-role="<%= nv.Role || '' %>"
+                    data-hoten="<%= nv.HoTen %>"
+                  >
+                    <%= nv.HoTen %> (Mã NV: <%= nv.MANV %>) &bull; <%= nv.HasLogin ? 'Đã có tài khoản' : 'Chưa có tài khoản' %>
+                  </option>
+                <% }) %>
+              <% } %>
+            </select>
+
+            <!-- Trigger Button hiển thị giao diện tùy biến -->
+            <button 
+              type="button" 
+              id="customSelectBtn" 
+              onclick="toggleEmployeeDropdown()"
+              class="w-full flex items-center justify-between px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-left focus:outline-none focus:ring-2 focus:ring-[#0088ff]/20 focus:border-[#0088ff] transition shadow-sm"
+            >
+              <span id="customSelectLabel" class="text-slate-400 truncate w-full">
+                -- Chọn nhân viên để cấp / quản lý tài khoản --
+              </span>
+              <i id="customSelectChevron" class="fa-solid fa-chevron-down text-xs text-slate-400 ml-2 shrink-0 transition-transform duration-200"></i>
+            </button>
+
+            <!-- Menu xổ xuống tùy biến với hai bên Căn Trái / Căn Phải -->
+            <div 
+              id="customSelectMenu" 
+              class="hidden absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-xl divide-y divide-slate-100"
+            >
+              <!-- Dòng tiêu đề gợi ý (không chọn được) -->
+              <div class="px-3.5 py-2 text-xs text-slate-400 italic bg-slate-50/80 select-none">
+                -- Chọn nhân viên để cấp / quản lý tài khoản --
+              </div>
+
+              <!-- Danh sách nhân viên render động -->
+              <div id="customSelectItems">
+                <% if (typeof logins !== 'undefined' && logins && logins.length > 0) { %>
+                  <% logins.forEach(nv => { %>
+                    <div 
+                      class="custom-option flex items-center justify-between px-3.5 py-2.5 hover:bg-blue-50/70 cursor-pointer transition select-none text-xs"
+                      data-manv="<%= nv.MANV %>"
+                      onclick="selectCustomOption(<%= nv.MANV %>)"
+                    >
+                      <span class="font-medium text-slate-800 truncate pr-2">
+                        <%= nv.HoTen %> <span class="text-slate-400 font-normal">(Mã NV: <%= nv.MANV %>)</span>
+                      </span>
+                      <span class="shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded-full <%= nv.HasLogin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200' %>">
+                        <%= nv.HasLogin ? 'Đã có tài khoản' : 'Chưa có tài khoản' %>
+                      </span>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 2. Ô nhập Tên đăng nhập (SQL Server Login) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Tên đăng nhập <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-user text-sm"></i>
+              </span>
+              <input 
+                type="text" 
+                id="usernameInput" 
+                name="username" 
+                required 
+                disabled
+                placeholder="Tối thiểu 3 ký tự" 
+                class="w-full pl-10 pr-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm cursor-not-allowed focus:outline-none transition"
+              >
+            </div>
+          </div>
+
+          <!-- 3. Ô nhập Mật mã (Password) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Mật mã <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-lock text-sm"></i>
+              </span>
+              <input 
+                type="password" 
+                id="passwordInput" 
+                name="password" 
+                required 
+                disabled
+                placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)..." 
+                class="w-full pl-10 pr-10 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm cursor-not-allowed focus:outline-none transition"
+              >
+              <!-- Nút toggle xem mật khẩu (ẩn ban đầu, chỉ hiện khi cấp mới tài khoản) -->
+              <button 
+                type="button" 
+                id="togglePasswordBtn" 
+                onclick="togglePasswordVisibility()" 
+                title="Xem / Ẩn mật khẩu"
+                class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition"
+              >
+                <i id="togglePasswordIcon" class="fa-solid fa-eye-slash text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Radio button chọn Thuộc Nhóm: Nhân viên hoặc Admin -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Thuộc Nhóm quyền <span class="text-rose-500">*</span>
+            </label>
+            <div id="roleRadioGroup" class="bg-slate-50 p-3 rounded-lg border border-slate-200/80 space-y-2.5 opacity-60">
+              <label id="labelRoleNhanvien" class="flex items-center space-x-2.5 cursor-not-allowed">
+                <input 
+                  type="radio" 
+                  name="role" 
+                  id="roleNhanvien" 
+                  value="Nhanvien" 
+                  checked 
+                  disabled
+                  class="text-[#0088ff] focus:ring-[#0088ff] h-4 w-4"
+                >
+                <span class="text-xs font-semibold text-slate-700">Nhân viên</span>
+              </label>
+
+              <div class="border-t border-slate-200/60 my-1"></div>
+
+              <label id="labelRoleAdmin" class="flex items-center space-x-2.5 cursor-not-allowed">
+                <input 
+                  type="radio" 
+                  name="role" 
+                  id="roleAdmin" 
+                  value="Admin" 
+                  disabled
+                  class="text-[#0088ff] focus:ring-[#0088ff] h-4 w-4"
+                >
+                <span class="text-xs font-semibold text-slate-700">Admin</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 5. Các nút lệnh chức năng chuẩn: Tạo username, Xóa username, Thoát -->
+          <div class="pt-4 border-t border-slate-100 flex items-center space-x-2">
+            <!-- Nút Tạo username -->
+            <button 
+              type="submit" 
+              id="btnCreateLogin" 
+              disabled
+              class="btn-sapo-primary flex-1 flex items-center justify-center space-x-1.5 py-2.5 text-xs font-bold opacity-50 cursor-not-allowed"
+            >
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Tạo username</span>
+            </button>
+
+            <!-- Nút Xóa username -->
+            <button 
+              type="button" 
+              id="btnDeleteLogin" 
+              disabled 
+              onclick="handleDeleteCurrentLogin()" 
+              class="btn-sapo-delete flex items-center justify-center space-x-1.5 px-4 py-2.5 text-xs font-bold opacity-50 cursor-not-allowed"
+            >
+              <i class="fa-solid fa-user-minus"></i>
+              <span>Xóa username</span>
+            </button>
+
+            <!-- Nút Thoát -->
+            <a 
+              href="/employees" 
+              class="btn-sapo-cancel flex items-center justify-center px-4 py-2.5 text-xs font-medium text-slate-600 hover:text-slate-800"
+            >
+              <span>Thoát</span>
+            </a>
+          </div>
+
+        </form>
       </div>
     </div>
 
-    <!-- Các nút lệnh chức năng -->
-    <div class="flex space-x-3 pt-4 border-t border-gray-100">
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
-        Tạo username
-      </button>
-      <button type="button" onclick="deleteSelectedLogin()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
-        Xóa username
-      </button>
-      <a href="/employees" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium text-center transition">
-        Thoát
-      </a>
+    <!-- CỘT PHẢI: BẢNG DANH SÁCH TÀI KHOẢN ĐÃ CẤP TRÊN SQL SERVER (Chiếm 7/12 cột) -->
+    <div class="lg:col-span-7">
+      <div class="sapo-card p-6 space-y-4">
+        
+        <!-- Header bảng -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-list-check text-slate-400"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Danh sách tài khoản</span>
+          </div>
+          <span id="activeCountBadge" class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+            Đang tải...
+          </span>
+        </div>
+
+        <!-- Ô lọc nhanh tài khoản -->
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+          </span>
+          <input 
+            type="text" 
+            id="searchLoginInput" 
+            oninput="handleSearchLogins(this.value)"
+            placeholder="Tìm theo tên đăng nhập, họ tên nhân viên hoặc mã NV..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0088ff]/20 focus:border-[#0088ff] transition"
+          >
+        </div>
+
+        <!-- Bảng danh sách tài khoản chuẩn Sapo Table -->
+        <div class="overflow-x-auto rounded-lg border border-slate-200/80">
+          <table class="sapo-table w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="px-3.5 py-2.5">Mã NV</th>
+                <th class="px-3.5 py-2.5">Họ và tên</th>
+                <th class="px-3.5 py-2.5">Tên đăng nhập</th>
+                <th class="px-3.5 py-2.5 text-center">Vai trò</th>
+                <th class="px-3.5 py-2.5 text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="loginTableBody" class="divide-y divide-slate-100">
+              <!-- Render động bằng JavaScript để cập nhật tức thì sau khi Tạo / Xóa -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-[11px] text-slate-400 italic pt-1">
+          <span>* Click vào một dòng trên bảng để nạp thông tin lên form phía trên.</span>
+        </div>
+
+      </div>
     </div>
-  </form>
+
+  </div>
+
 </div>
+
+<!-- Nạp script xử lý phía Client cho Form Tạo / Xóa Login -->
+<script>
+  // Khởi tạo dữ liệu ban đầu từ Server render sang Client
+  window.INITIAL_LOGINS = <%- JSON.stringify(typeof logins !== 'undefined' ? logins : []) %>;
+  window.CURRENT_USERNAME = "<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.username) ? currentUser.username : '' %>";
+</script>
+<script src="/js/admin-logins.js"></script>

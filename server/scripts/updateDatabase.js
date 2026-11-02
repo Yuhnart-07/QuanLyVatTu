@@ -196,28 +196,28 @@ async function runUpdate() {
       GRANT EXECUTE TO [Nhanvien];
       GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::dbo TO [Nhanvien];
 
-      -- 3. Dọn dẹp triệt để các tài khoản dư thừa (nếu có)
-      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'1')
+      -- 3. Dọn dẹp các tài khoản thừa hoặc user cũ dạng NV_1, NV_2
+      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_1')
       BEGIN
-        ALTER ROLE [Admin] DROP MEMBER [1];
-        DROP USER [1];
+        ALTER ROLE [Admin] DROP MEMBER [NV_1];
+        DROP USER [NV_1];
       END
       IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'admin')
       BEGIN
         DROP LOGIN [admin];
       END
 
-      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'2')
+      IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_2')
       BEGIN
-        ALTER ROLE [Nhanvien] DROP MEMBER [2];
-        DROP USER [2];
+        ALTER ROLE [Nhanvien] DROP MEMBER [NV_2];
+        DROP USER [NV_2];
       END
       IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'nhanvien')
       BEGIN
         DROP LOGIN [nhanvien];
       END
 
-      -- 4. Đảm bảo tài khoản NV_1 (Admin, MANV = 1, User = [NV_1]) tồn tại
+      -- 4. Chuẩn hóa tài khoản Quản trị: Login = 'NV_1' (MANV = 1, Database User BẮT BUỘC là Mã NV: [1], Role: Admin)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_1')
       BEGIN
         CREATE LOGIN [NV_1] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
@@ -227,18 +227,18 @@ async function runUpdate() {
         ALTER LOGIN [NV_1] WITH PASSWORD = N'123456';
       END
 
-      IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_1')
+      IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'1')
       BEGIN
-        CREATE USER [NV_1] FOR LOGIN [NV_1];
+        CREATE USER [1] FOR LOGIN [NV_1];
       END
-      ALTER ROLE [Admin] ADD MEMBER [NV_1];
+      ALTER ROLE [Admin] ADD MEMBER [1];
 
       IF IS_SRVROLEMEMBER('securityadmin', 'NV_1') = 0
       BEGIN
         ALTER SERVER ROLE [securityadmin] ADD MEMBER [NV_1];
       END
 
-      -- 5. Đảm bảo tài khoản NV_2 (Nhanvien, MANV = 2, User = [NV_2]) tồn tại
+      -- 5. Chuẩn hóa tài khoản Nhân viên: Login = 'NV_2' (MANV = 2, Database User BẮT BUỘC là Mã NV: [2], Role: Nhanvien)
       IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'NV_2')
       BEGIN
         CREATE LOGIN [NV_2] WITH PASSWORD = N'123456', CHECK_POLICY = OFF;
@@ -248,11 +248,11 @@ async function runUpdate() {
         ALTER LOGIN [NV_2] WITH PASSWORD = N'123456';
       END
 
-      IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'NV_2')
+      IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'2')
       BEGIN
-        CREATE USER [NV_2] FOR LOGIN [NV_2];
+        CREATE USER [2] FOR LOGIN [NV_2];
       END
-      ALTER ROLE [Nhanvien] ADD MEMBER [NV_2];
+      ALTER ROLE [Nhanvien] ADD MEMBER [2];
     `);
 
     console.log('   ✅ Đã kiểm tra Roles, Quyền và Logins hệ thống.');

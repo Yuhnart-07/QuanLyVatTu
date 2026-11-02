@@ -60,18 +60,12 @@ BEGIN
     -- -------------------------------------------------------
     DECLARE @MANV INT = NULL;
 
-    -- Ưu tiên 1: Tên Database User là số nguyên thuần túy (chính là MANV theo chuẩn của Thầy)
+    -- Tên Database User bắt buộc là số nguyên thuần túy (chính là MANV theo chuẩn của Thầy)
     SET @MANV = TRY_CAST(@DbUserName AS INT);
-
-    -- Fallback tương thích ngược (nếu CSDL cũ còn User dạng NV_1 hoặc USER_1)
-    IF @MANV IS NULL AND @DbUserName LIKE 'NV[_]%'
-        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 4, LEN(@DbUserName)) AS INT);
-    ELSE IF @MANV IS NULL AND @DbUserName LIKE 'USER[_]%'
-        SET @MANV = TRY_CAST(SUBSTRING(@DbUserName, 6, LEN(@DbUserName)) AS INT);
 
     IF @MANV IS NULL
     BEGIN
-        THROW 50001, N'Không thể xác định mã nhân viên từ định danh bảo mật!', 1;
+        THROW 50001, N'Không thể xác định mã nhân viên từ định danh bảo mật (Database User Name phải là Mã NV)!', 1;
     END
 
     -- Kiểm tra MANV có tồn tại trong bảng Nhanvien

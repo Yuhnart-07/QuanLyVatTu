@@ -398,7 +398,7 @@ SQL Server
 ├── Logins (login_admin, login_nv01...)
 ├── Server Roles
 └── Database QLVT
-    ├── Users (nv01, nv02...)
+    ├── Users (1, 2...)
     ├── Database Roles (Admin, Nhanvien)
     └── Permissions
 ```

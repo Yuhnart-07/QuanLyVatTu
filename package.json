@@ -7,7 +7,10 @@
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
     "db:setup": "node server/scripts/setupDatabase.js",
-    "db:update": "node server/scripts/updateDatabase.js"
+    "db:update": "node server/scripts/updateDatabase.js",
+    "test:login": "node server/scripts/testLoginFeature.js",
+    "test:employee": "node server/scripts/testEmployeeFeature.js",
+    "test": "node server/scripts/testLoginFeature.js && node server/scripts/testEmployeeFeature.js"
   },
   "keywords": [
     "qlvt",
